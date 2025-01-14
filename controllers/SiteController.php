@@ -1,7 +1,8 @@
 <?php
 
 namespace app\controllers;
-
+use app\components\AuthHandler;
+use yii\helpers\Url;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -18,38 +19,29 @@ class SiteController extends Controller
     public function behaviors()
     {
         return [
-            'access' => [
-                'class' => AccessControl::class,
-                'only' => ['logout'],
-                'rules' => [
-                    [
-                        'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::class,
-                'actions' => [
-                    'logout' => ['post'],
+            "access" => [
+                "class" => \yii\filters\AccessControl::class,
+                "only" => ["logout", "index"],
+                "rules" => [
+                    // TODO(annad): Logout is post request!
+                    ["allow" => true, "actions" => ["index", "logout"], "roles" => ["@"]],
                 ],
             ],
         ];
     }
-
     /**
      * {@inheritdoc}
      */
     public function actions()
     {
         return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
+            "error" => [
+                "class" => \yii\web\ErrorAction::class,
             ],
-            'captcha' => [
-                'class' => 'yii\captcha\CaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
+
+            "auth" => [
+                "class" => \yii\authclient\AuthAction::class,
+                "clientCollection" => "authClientCollection",
             ],
         ];
     }
@@ -74,16 +66,10 @@ class SiteController extends Controller
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
-
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        }
-
-        $model->password = '';
-        return $this->render('login', [
-            'model' => $model,
-        ]);
+        $cli = Yii::$app->authClientCollection->getClient("keycloak");
+        $to = Url::to(["auth", "authclient" => $cli->getName()]);
+        return $this->redirect($to);
+        // print_r($to);
     }
 
     /**
@@ -124,5 +110,32 @@ class SiteController extends Controller
     public function actionAbout()
     {
         return $this->render('about');
+    }
+
+    
+
+    public function actionAuthCallback()
+    {
+        $req = Yii::$app->request;
+        $authcode = $req->get("code");
+        $cli = Yii::$app->authClientCollection->getClient("keycloak");
+
+        if (!$authcode) {
+            $msg = Yii::t("site", "Невалидный код авторизации");
+            throw new BadRequestHttpException($msg);
+        }
+
+        $cli->fetchAccessToken($authcode);
+        $token = $cli->getAccessToken();
+        $cli->setAccessToken($token);
+        $user = (new AuthHandler($cli))->handle();
+        Yii::$app->user->login($user);
+        if (Yii::$app->user->isGuest) {
+            $msg = Yii::t("site", "Не удалось авторизовать пользователя");
+            throw new ServerErrorHttpException($msg);
+        }
+
+        return $this->redirect(Url::to("index"));
+        
     }
 }

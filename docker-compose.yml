@@ -2,10 +2,10 @@ version: '3'
 services:
   nginx:
     image: nginx
+    container_name: nginx
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf # Mounting default.conf here
-      - ./:/var/www/html # Application files
-
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf # Конфигурация Nginx
+      - ./:/var/www/html # Файлы приложения
     ports:
       - "80:80"
     depends_on:
@@ -14,39 +14,52 @@ services:
 
   php-fpm:
     image: php:8.3-fpm
+    container_name: php-fpm
     volumes:
-      - ./:/var/www/html # Application files
+      - ./:/var/www/html # Файлы приложения
     depends_on:
       - data
 
   data:
     image: mysql:latest
-
     container_name: data
     environment:
-
       MYSQL_DATABASE: yii2basic
       MYSQL_USER: yii2basic
       MYSQL_PASSWORD: yii2basic
       MYSQL_ROOT_PASSWORD: yii2basic
-
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/mysql # Использование именованного тома для хранения данных
     ports:
       - "3306:3306"
 
-  phpmyadmin:
+  phpmyadmins:
     image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmins
     environment:
       PMA_HOST: data
-
-      MYSQL_PASSWORD: yii2basic
+      PMA_USER: yii2basic
+      PMA_PASSWORD: yii2basic
       MYSQL_ROOT_PASSWORD: yii2basic
-
     ports:
       - "8080:80"
     depends_on:
       - data
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    container_name: keycloak
+    command: [ "start-dev", "--spi-theme-static-max-age=-1", "--spi-theme-cache-themes=false", "--spi-theme-cache-templates=false" ]
+    environment:
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://data:3306/keycloak?user=keycloak&password=keycloak
+      KC_HOSTNAME: localhost
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: secret
+    ports:
+      - "8081:8080"
+    depends_on:
+      - data
+
 volumes:
-  db_data:
+  db_data: # Именованный том для данных MySQL

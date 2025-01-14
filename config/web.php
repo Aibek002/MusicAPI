@@ -12,6 +12,32 @@ $config = [
         '@npm'   => '@vendor/npm-asset',
     ],
     'components' => [
+        'authClientCollection' => [
+            'class' => 'yii\authclient\Collection',
+            'clients' => [
+                'keycloak' => [
+                    'class' => 'yii\authclient\OpenIdConnect', // Указываем путь к вашему классу
+                    'authUrl' => 'http://192.168.0.215:8180/realms/musicapi/protocol/openid-connect/auth',
+                    "issuerUrl" => 'http://192.168.0.215:8180/realms/musicapi/',
+                    'apiBaseUrl' => 'http://192.168.0.215:8180/realms/musicapi/protocol/openid-connect',
+                    'clientId' => 'musicapi', // Замените на ваш Client ID
+                    'clientSecret' => 'YiMc6ZeKT0AQG7TdBiKipYKJF3JoVbLp', // Замените на ваш Client Secret
+                    'scope' => 'openid profile email',
+                    'returnUrl' => 'http://localhost:80/index.php?r=site/auth-callback',
+                    "name" => "keycloak",
+                    "validateAuthState" => true,
+                    "autoRefreshAccessToken" => true,
+                    "validateJws" => false,
+                    "stateStorage" => [
+                        "class" => "yii\authclient\SessionStateStorage",
+                        "session" => "session",
+                    ],
+                    "scope" => "openid profile email",
+
+                ],
+            ],
+        ],
+
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'G8sGVSeYi4RqnvsY0wqa5oNVd8TXnNLl',
