@@ -17,13 +17,13 @@ $config = [
             'clients' => [
                 'keycloak' => [
                     'class' => 'yii\authclient\OpenIdConnect', // Указываем путь к вашему классу
-                    'authUrl' => 'http://192.168.0.215:8180/realms/musicapi/protocol/openid-connect/auth',
-                    "issuerUrl" => 'http://192.168.0.215:8180/realms/musicapi/',
-                    'apiBaseUrl' => 'http://192.168.0.215:8180/realms/musicapi/protocol/openid-connect',
-                    'clientId' => 'musicapi', // Замените на ваш Client ID
-                    'clientSecret' => 'YiMc6ZeKT0AQG7TdBiKipYKJF3JoVbLp', // Замените на ваш Client Secret
+                    'authUrl' => 'http://localhost:8081/realms/music-api/protocol/openid-connect/auth',
+                    "issuerUrl" => 'http://localhost:8081/realms/music-api/',
+                    'apiBaseUrl' => 'http://localhost:8081/realms/music-api/protocol/openid-connect',
+                    'clientId' => 'music-cli-test', // Замените на ваш Client ID
+                    'clientSecret' => 'tAv0MUBudlF7kqFCpZtUyNBELQZn9Ft1', // Замените на ваш Client Secret
                     'scope' => 'openid profile email',
-                    'returnUrl' => 'http://localhost:80/index.php?r=site/auth-callback',
+                    'returnUrl' => 'http://localhost/site/auth-callback',
                     "name" => "keycloak",
                     "validateAuthState" => true,
                     "autoRefreshAccessToken" => true,
@@ -32,7 +32,6 @@ $config = [
                         "class" => "yii\authclient\SessionStateStorage",
                         "session" => "session",
                     ],
-                    "scope" => "openid profile email",
 
                 ],
             ],
