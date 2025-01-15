@@ -21,10 +21,8 @@ services:
 
   data:
     image: mysql:latest
-
     container_name: data
     environment:
-
       MYSQL_DATABASE: yii2basic
       MYSQL_USER: yii2basic
       MYSQL_PASSWORD: yii2basic
