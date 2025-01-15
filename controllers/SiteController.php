@@ -29,6 +29,7 @@ class SiteController extends Controller
             ],
         ];
     }
+
     /**
      * {@inheritdoc}
      */
@@ -61,6 +62,13 @@ class SiteController extends Controller
      *
      * @return Response|string
      */
+   
+
+    /**
+     * Login action.
+     *
+     * @return Response|string
+     */
     public function actionLogin()
     {
         if (!Yii::$app->user->isGuest) {
@@ -68,9 +76,12 @@ class SiteController extends Controller
         }
         $cli = Yii::$app->authClientCollection->getClient("keycloak");
         $to = Url::to(["auth", "authclient" => $cli->getName()]);
+        // Логирование для диагностики
+        // Yii::info("Перенаправление на: " . $to);
         return $this->redirect($to);
-        // print_r($to);
+        // print_r("login");
     }
+
 
     /**
      * Logout action.
@@ -79,63 +90,55 @@ class SiteController extends Controller
      */
     public function actionLogout()
     {
-        Yii::$app->user->logout();
+        $user = Yii::$app->user;
+        if (!$user->isGuest) {
+            $client = Yii::$app->authClientCollection->getClient("keycloak");
+            // TODO(annad): You must solve this problem on KeycloakClientWrapper level!
+            try {
+                $logoutUrl = (new \app\components\KeycloakClientWrapper($client))->getLogoutUrl();
+            } catch (\Exception $e) {
+                $logoutUrl = Url::base();
+            }
+
+            Yii::$app->user->logout($destroySession = true);
+            return $this->redirect($logoutUrl);
+        }
 
         return $this->goHome();
+
     }
-
-    /**
-     * Displays contact page.
-     *
-     * @return Response|string
-     */
-    public function actionContact()
-    {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
-            Yii::$app->session->setFlash('contactFormSubmitted');
-
-            return $this->refresh();
-        }
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Displays about page.
-     *
-     * @return string
-     */
-    public function actionAbout()
-    {
-        return $this->render('about');
-    }
-
-    
-
-    public function actionAuthCallback()
+ public function actionAuthCallback($client = null)
     {
         $req = Yii::$app->request;
         $authcode = $req->get("code");
-        $cli = Yii::$app->authClientCollection->getClient("keycloak");
+        print_r("hello");
+        // $cli = Yii::$app->authClientCollection->getClient("keycloak");
 
-        if (!$authcode) {
-            $msg = Yii::t("site", "Невалидный код авторизации");
-            throw new BadRequestHttpException($msg);
-        }
+        // if (!$authcode) {
+        //     $msg = Yii::t("site", "Невалидный код авторизации");
+        //     throw new BadRequestHttpException($msg);
+        // }
+       
+        // $cli->fetchAccessToken($authcode);
+        // $token = $cli->getAccessToken();
+        // $cli->setAccessToken($token);
+        // $user = (new AuthHandler($cli))->handle();
+        // Yii::$app->user->login($user);
+        // if (Yii::$app->user->isGuest) {
+        //     $msg = Yii::t("site", "Не удалось авторизовать пользователя");
+        //     throw new ServerErrorHttpException($msg);
+        // }
 
-        $cli->fetchAccessToken($authcode);
-        $token = $cli->getAccessToken();
-        $cli->setAccessToken($token);
-        $user = (new AuthHandler($cli))->handle();
-        Yii::$app->user->login($user);
-        if (Yii::$app->user->isGuest) {
-            $msg = Yii::t("site", "Не удалось авторизовать пользователя");
-            throw new ServerErrorHttpException($msg);
-        }
+        // return $this->redirect(Url::to("index"));
 
-        return $this->redirect(Url::to("index"));
-        
+    }
+    public function actionAbout()
+    {
+        return $this->render("about");
+    }
+
+    public function actionContact()
+    {
+        return $this->render("contact");
     }
 }
