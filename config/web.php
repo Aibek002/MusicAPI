@@ -15,24 +15,23 @@ $config = [
         'authClientCollection' => [
             'class' => 'yii\authclient\Collection',
             'clients' => [
-                'keycloak' => [
-                    'class' => 'yii\authclient\OpenIdConnect', // Указываем путь к вашему классу
-                    'authUrl' => 'http://localhost:8081/realms/music-api/protocol/openid-connect/auth',
-                    "issuerUrl" => 'http://localhost:8081/realms/music-api/',
-                    'apiBaseUrl' => 'http://localhost:8081/realms/music-api/protocol/openid-connect',
-                    'clientId' => 'music-cli-test', // Замените на ваш Client ID
-                    'clientSecret' => 'tAv0MUBudlF7kqFCpZtUyNBELQZn9Ft1', // Замените на ваш Client Secret
-                    'scope' => 'openid profile email',
-                    'returnUrl' => 'http://localhost/site/auth-callback',
+                "keycloak" => [
+                    "class" => "yii\authclient\OpenIdConnect",
+                    "clientId" => 'musiccli',
+                    "clientSecret" => 'D2Sq7wizqi8X0YYpQg8qIFqHgcuAZ9pb',
+                    "returnUrl" => 'http://localhost:80/index.php?r=site/auth-callback',
+                    "issuerUrl" => 'http://localhost:8180/realms/music-api/',
                     "name" => "keycloak",
                     "validateAuthState" => true,
+                   
                     "autoRefreshAccessToken" => true,
                     "validateJws" => false,
+                    
                     "stateStorage" => [
                         "class" => "yii\authclient\SessionStateStorage",
                         "session" => "session",
                     ],
-
+                    "scope" => "openid profile",
                 ],
             ],
         ],
@@ -84,15 +83,20 @@ if (YII_ENV_DEV) {
     $config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
+        'allowedIPs' => ['127.0.0.1', '::1', '172.21.0.1'], 
         // uncomment the following to add your IP if you are not connecting from localhost.
         //'allowedIPs' => ['127.0.0.1', '::1'],
+        
+
     ];
 
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
+        'allowedIPs' => ['127.0.0.1', '172.19.0.1', '::1'], 
         // uncomment the following to add your IP if you are not connecting from localhost.
         //'allowedIPs' => ['127.0.0.1', '::1'],
+        
     ];
 }
 

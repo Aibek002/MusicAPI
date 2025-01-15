@@ -29,10 +29,6 @@ class SiteController extends Controller
             ],
         ];
     }
-
-    /**
-     * {@inheritdoc}
-     */
     public function actions()
     {
         return [
@@ -46,6 +42,7 @@ class SiteController extends Controller
             ],
         ];
     }
+
 
     /**
      * Displays homepage.
@@ -62,7 +59,7 @@ class SiteController extends Controller
      *
      * @return Response|string
      */
-   
+
 
     /**
      * Login action.
@@ -76,12 +73,10 @@ class SiteController extends Controller
         }
         $cli = Yii::$app->authClientCollection->getClient("keycloak");
         $to = Url::to(["auth", "authclient" => $cli->getName()]);
-        // Логирование для диагностики
-        // Yii::info("Перенаправление на: " . $to);
         return $this->redirect($to);
-        // print_r("login");
-    }
+        // print_r($cli);
 
+    }
 
     /**
      * Logout action.
@@ -107,31 +102,7 @@ class SiteController extends Controller
         return $this->goHome();
 
     }
- public function actionAuthCallback($client = null)
-    {
-        $req = Yii::$app->request;
-        $authcode = $req->get("code");
-        print_r("hello");
-        // $cli = Yii::$app->authClientCollection->getClient("keycloak");
 
-        // if (!$authcode) {
-        //     $msg = Yii::t("site", "Невалидный код авторизации");
-        //     throw new BadRequestHttpException($msg);
-        // }
-       
-        // $cli->fetchAccessToken($authcode);
-        // $token = $cli->getAccessToken();
-        // $cli->setAccessToken($token);
-        // $user = (new AuthHandler($cli))->handle();
-        // Yii::$app->user->login($user);
-        // if (Yii::$app->user->isGuest) {
-        //     $msg = Yii::t("site", "Не удалось авторизовать пользователя");
-        //     throw new ServerErrorHttpException($msg);
-        // }
-
-        // return $this->redirect(Url::to("index"));
-
-    }
     public function actionAbout()
     {
         return $this->render("about");
@@ -140,5 +111,32 @@ class SiteController extends Controller
     public function actionContact()
     {
         return $this->render("contact");
+    }
+    public function actionAuthCallback()
+    {
+        $req = Yii::$app->request;
+        $authcode = $req->get("code");
+
+
+        $cli = Yii::$app->authClientCollection->getClient("keycloak");
+        $cli->fetchAccessToken($authcode);
+
+        $token = $cli->getAccessToken();
+        $cli->setAccessToken($token);
+        $user = (new AuthHandler($cli))->handle();
+        // Yii::$app->user->login($user);
+        Yii::$app->user->login($user);
+
+        if (Yii::$app->user->isGuest) {
+
+            $msg = Yii::t("site", "Не удалось авторизовать пользователя");
+            throw new ServerErrorHttpException($msg);
+        }
+
+        return $this->redirect(Url::to("index"));
+
+        // echo '<pre>' . print_r($user, true) . '</pre>';
+
+
     }
 }
