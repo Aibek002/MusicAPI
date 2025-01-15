@@ -18,15 +18,15 @@ $config = [
                 "keycloak" => [
                     "class" => "yii\authclient\OpenIdConnect",
                     "clientId" => 'musiccli',
-                    "clientSecret" => 'D2Sq7wizqi8X0YYpQg8qIFqHgcuAZ9pb',
+                    "clientSecret" => '9bF9w4mpBxIlrkAnqz95EFAXHYCl88M3',
                     "returnUrl" => 'http://localhost:80/index.php?r=site/auth-callback',
-                    "issuerUrl" => 'http://localhost:8180/realms/music-api/',
+                    "issuerUrl" => 'http://192.168.86.85:8180/realms/music-api/',
                     "name" => "keycloak",
                     "validateAuthState" => true,
-                   
+
                     "autoRefreshAccessToken" => true,
                     "validateJws" => false,
-                    
+
                     "stateStorage" => [
                         "class" => "yii\authclient\SessionStateStorage",
                         "session" => "session",
@@ -62,6 +62,7 @@ $config = [
                 [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
+                    'logFile' => '@runtime/logs/app.log', // Убедитесь, что путь правильный
                 ],
             ],
         ],
@@ -83,20 +84,22 @@ if (YII_ENV_DEV) {
     $config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
-        'allowedIPs' => ['127.0.0.1', '::1', '172.21.0.1'], 
+       'allowedIPs' => ['127.0.0.1', '::1', '172.18.*.*'],
+
         // uncomment the following to add your IP if you are not connecting from localhost.
         //'allowedIPs' => ['127.0.0.1', '::1'],
-        
+
 
     ];
 
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
-        'allowedIPs' => ['127.0.0.1', '172.19.0.1', '::1'], 
+        'allowedIPs' => ['127.0.0.1', '::1', '172.18.*.*'],
+
         // uncomment the following to add your IP if you are not connecting from localhost.
         //'allowedIPs' => ['127.0.0.1', '::1'],
-        
+
     ];
 }
 

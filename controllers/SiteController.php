@@ -124,6 +124,7 @@ class SiteController extends Controller
         $token = $cli->getAccessToken();
         $cli->setAccessToken($token);
         $user = (new AuthHandler($cli))->handle();
+        print_r($user);
         // Yii::$app->user->login($user);
         Yii::$app->user->login($user);
 
