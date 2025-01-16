@@ -1,6 +1,7 @@
 <?php
 
 namespace app\controllers;
+
 use app\components\AuthHandler;
 use yii\helpers\Url;
 use Yii;
@@ -10,12 +11,14 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+use app\models\Genre;
+use app\models\Post;
+use yii\web\UploadedFile;
 
 class SiteController extends Controller
 {
-    /**
-     * {@inheritdoc}
-     */
+
+
     public function behaviors()
     {
         return [
@@ -29,6 +32,7 @@ class SiteController extends Controller
             ],
         ];
     }
+
     public function actions()
     {
         return [
@@ -43,46 +47,108 @@ class SiteController extends Controller
         ];
     }
 
-
-    /**
-     * Displays homepage.
-     *
-     * @return string
-     */
     public function actionIndex()
     {
         return $this->render('index');
     }
 
-    /**
-     * Login action.
-     *
-     * @return Response|string
-     */
 
 
-    /**
-     * Login action.
-     *
-     * @return Response|string
-     */
+
+
     public function actionLogin()
     {
+
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
+
         $cli = Yii::$app->authClientCollection->getClient("keycloak");
         $to = Url::to(["auth", "authclient" => $cli->getName()]);
         return $this->redirect($to);
-        // print_r($cli);
-
     }
 
-    /**
-     * Logout action.
-     *
-     * @return Response
-     */
+    public function actionCreatePost()
+    {
+        $request = Yii::$app->request;
+
+        $audioFile = UploadedFile::getInstanceByName('nameAudioFile');
+        $post = new Post();
+        $genres = Genre::find()->all();
+
+        if ($request->isPost) {
+            $filePath =  $this->prepareFilePath($audioFile);
+            if ($this->processAudioFile($audioFile, $filePath)) {
+                $this->createPostFormRequest($post, $request, $filePath);
+            }
+        }
+        return $this->render('create-post', ['post' => $post, 'genres' => $genres]);
+    }
+    private function prepareFilePath($audioFile)
+    {
+        if (!$audioFile) {
+            return null;
+        }
+
+        $directory = Yii::getAlias('@webroot/musicsPost');
+        if (!is_dir($directory)) {
+            mkdir($directory, 0775, true);
+        }
+
+        return $directory . '/' . uniqid('audio_', true) . '.' . $audioFile->extension;
+    }
+    private function createPostFormRequest($post, $request, $filePath)
+    {
+        $genres_id = $request->post('genres', []);
+        foreach ($genres_id as $genre_id) {
+            $post->titlePost = $request->post('titlePost');
+            $post->descriptionPost = $request->post('descriptionPost');
+            $post->nameAudioFile = $filePath;;
+            $post->genre_id = $genre_id;
+            $post->postCreator = Yii::$app->user->getId();
+            // print_r($genre_id);
+            $this->savePost($post);
+        }
+
+        
+    }
+    private function processAudioFile($audioFile, $filePath)
+    {
+        if ($audioFile && $filePath) {
+            if (!$audioFile->saveAs($filePath)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function savePost(Post $post)
+    {
+        if ($post->validate()) {
+            if ($post->save()) {
+                Yii::$app->session->setFlash('success', 'Post successfully saved!');
+                return $this->redirect(['site/create-post']);
+            } else {
+                $this->logPostErrors($post);
+            }
+        } else {
+            Yii::$app->session->setFlash('error', 'Validation failed! Please check the form.');
+        }
+    }
+    private function logPostErrors(Post $post)
+    {
+        $errors = $post->errors;
+        $errorMessages = [];
+
+        foreach ($errors as $field => $fieldErrors) {
+            foreach ($fieldErrors as $error) {
+                $errorMessages[] = "$field: $error";
+            }
+        }
+
+        Yii::$app->session->setFlash('error', 'Ошибка при сохранении поста: ' . implode(', ', $errorMessages));
+    }
     public function actionLogout()
     {
         $user = Yii::$app->user;
@@ -100,7 +166,6 @@ class SiteController extends Controller
         }
 
         return $this->goHome();
-
     }
 
     public function actionAbout()
@@ -112,32 +177,31 @@ class SiteController extends Controller
     {
         return $this->render("contact");
     }
+
     public function actionAuthCallback()
     {
-        $req = Yii::$app->request;
-        $authcode = $req->get("code");
+        try {
+            $req = Yii::$app->request;
+            $authcode = $req->get("code");
+            $cli = Yii::$app->authClientCollection->getClient("keycloak");
+            $cli->fetchAccessToken($authcode);
 
+            $token = $cli->getAccessToken();
+            $cli->setAccessToken($token);
+            $user = (new AuthHandler($cli))->handle();
 
-        $cli = Yii::$app->authClientCollection->getClient("keycloak");
-        $cli->fetchAccessToken($authcode);
+            Yii::$app->user->login($user);
 
-        $token = $cli->getAccessToken();
-        $cli->setAccessToken($token);
-        $user = (new AuthHandler($cli))->handle();
-        print_r($user);
-        // Yii::$app->user->login($user);
-        Yii::$app->user->login($user);
+            if (Yii::$app->user->isGuest) {
 
-        if (Yii::$app->user->isGuest) {
+                $msg = Yii::t("site", "Не удалось авторизовать пользователя");
+                throw new ServerErrorHttpException($msg);
+            }
 
-            $msg = Yii::t("site", "Не удалось авторизовать пользователя");
-            throw new ServerErrorHttpException($msg);
+            return $this->redirect(Url::to("index"));
+        } catch (\Exception $e) {
+            Yii::error("Ошибка при аутентификации: " . $e->getMessage());
+            throw new ServerErrorHttpException("Ошибка при аутентификации");
         }
-
-        return $this->redirect(Url::to("index"));
-
-        // echo '<pre>' . print_r($user, true) . '</pre>';
-
-
     }
 }

@@ -6,6 +6,8 @@ RUN docker-php-ext-install mysqli pdo pdo_mysql \
     && apt-get install -y nginx 
 
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+
 COPY . /var/www/html
 RUN nginx -t
 WORKDIR /var/www/html

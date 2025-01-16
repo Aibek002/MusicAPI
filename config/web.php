@@ -20,7 +20,7 @@ $config = [
                     "clientId" => 'musiccli',
                     "clientSecret" => '9bF9w4mpBxIlrkAnqz95EFAXHYCl88M3',
                     "returnUrl" => 'http://localhost:80/index.php?r=site/auth-callback',
-                    "issuerUrl" => 'http://192.168.86.85:8180/realms/music-api/',
+                    "issuerUrl" => 'http://192.168.138.85:8180/realms/music-api/',
                     "name" => "keycloak",
                     "validateAuthState" => true,
 
