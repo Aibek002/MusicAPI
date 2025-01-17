@@ -11,8 +11,10 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
-use app\models\Genre;
+use app\models\Tags;
 use app\models\Post;
+use yii\data\Pagination;
+use yii\data\Sort;
 use yii\web\UploadedFile;
 
 class SiteController extends Controller
@@ -49,9 +51,52 @@ class SiteController extends Controller
 
     public function actionIndex()
     {
-        return $this->render('index');
-    }
+        $tagId = Yii::$app->request->get('tag_id'); // ID выбранного тега
+        $query = Post::find();
+        $tags = Tags::find()->all();
 
+        if ($tagId) {
+            $query->andWhere(['tag_id' => $tagId]);
+        }
+
+        // Настраиваем пагинацию
+        $pagination = new Pagination([
+            'defaultPageSize' => 10,
+            'totalCount' => $query->count(), // Общее количество записей
+        ]);
+
+
+
+        $sort = new Sort([
+            'attributes' => [
+                'titlePost' => [
+                    'asc' => ['titlePost' => SORT_ASC],
+                    'desc' => ['titlePost' => SORT_DESC],
+                    'default' => SORT_ASC,
+                    'label' => 'Title'
+                ],
+
+                'createAt' => [
+                    'asc' => ['createAt' => SORT_ASC],
+                    'desc' => ['createAt' => SORT_DESC],
+                    'default' => SORT_ASC,
+                    'label' => 'Date Created'
+                ]
+            ]
+        ]);
+        $query->orderBy($sort->orders);
+        // Применяем лимит и смещение
+        $post_music = $query
+            ->offset($pagination->offset)
+            ->limit($pagination->limit)
+            ->all();
+        return $this->render('index', [
+            'post_music' => $post_music,
+            'pagination' => $pagination,
+            'tags' => $tags,
+            'sort' => $sort
+        ]);
+    }
 
 
 
@@ -74,17 +119,17 @@ class SiteController extends Controller
 
         $audioFile = UploadedFile::getInstanceByName('nameAudioFile');
         $post = new Post();
-        $genres = Genre::find()->all();
+        $tags = Tags::find()->all();
 
         if ($request->isPost) {
-            $filePath =  $this->prepareFilePath($audioFile);
-            if ($this->processAudioFile($audioFile, $filePath)) {
-                $this->createPostFormRequest($post, $request, $filePath);
+            $file =  $this->prepareFile($audioFile);
+            if ($this->processAudioFile($audioFile, $file)) {
+                $this->createPostFormRequest($post, $request, $file);
             }
         }
-        return $this->render('create-post', ['post' => $post, 'genres' => $genres]);
+        return $this->render('create-post', ['post' => $post, 'tags' => $tags]);
     }
-    private function prepareFilePath($audioFile)
+    private function prepareFile($audioFile)
     {
         if (!$audioFile) {
             return null;
@@ -92,29 +137,27 @@ class SiteController extends Controller
 
         $directory = Yii::getAlias('@webroot/musicsPost');
         if (!is_dir($directory)) {
-            mkdir($directory, 0775, true);
+            mkdir($directory, 0777, true);
         }
 
-        return $directory . '/' . uniqid('audio_', true) . '.' . $audioFile->extension;
+        return  uniqid('audio_', true) . '.' . $audioFile->extension;
     }
-    private function createPostFormRequest($post, $request, $filePath)
+    private function createPostFormRequest($post, $request, $file)
     {
-        $genres_id = $request->post('genres', []);
-        foreach ($genres_id as $genre_id) {
+        $tags_id = $request->post('tags', []);
+        foreach ($tags_id as $tag_id) {
             $post->titlePost = $request->post('titlePost');
             $post->descriptionPost = $request->post('descriptionPost');
-            $post->nameAudioFile = $filePath;;
-            $post->genre_id = $genre_id;
+            $post->nameAudioFile = $file;
+            $post->tag_id = $tag_id;
             $post->postCreator = Yii::$app->user->getId();
-            // print_r($genre_id);
             $this->savePost($post);
         }
-
-        
     }
-    private function processAudioFile($audioFile, $filePath)
+    private function processAudioFile($audioFile, $file)
     {
-        if ($audioFile && $filePath) {
+        $filePath = Yii::getAlias('@webroot/musicsPost') . '/' . $file;
+        if ($audioFile && $file) {
             if (!$audioFile->saveAs($filePath)) {
                 return false;
             }
@@ -148,6 +191,21 @@ class SiteController extends Controller
         }
 
         Yii::$app->session->setFlash('error', 'Ошибка при сохранении поста: ' . implode(', ', $errorMessages));
+    }
+
+    public function actionCreateTags()
+    {
+
+        $request = Yii::$app->request;
+        $tags = new Tags();
+        if ($request->isPost) {
+            $tags->tag_type = $request->post('tags');
+            if ($tags->save()) {
+                Yii::$app->session->setFlash('success', 'Tags created successfully!');
+                return $this->redirect(['site/create-post']);
+            }
+        }
+        return $this->render('create-tags', ['tags' => $tags]);
     }
     public function actionLogout()
     {

@@ -2,6 +2,8 @@
 
 use yii\widgets\ActiveForm;
 use yii\helpers\Html;
+use yii\helpers\Url;
+
 ?>
 
 <?php $form = ActiveForm::begin([
@@ -17,17 +19,18 @@ use yii\helpers\Html;
 <?= $form->field($post, 'nameAudioFile')->fileInput(['name' => 'nameAudioFile']); ?>
 
 <p class="tags_title"><?= Yii::t('app', 'Choose tags for music:') ?></p>
+
 <div class="checkbox">
 
-    <?php foreach ($genres as $genre): ?>
-        <?= Html::checkbox('genres[]', false, [
-            'value' => $genre->id,
-            'label' => $genre->genre_type,  // Добавляем отображаемое название жанра
-            'id' => 'genre-' . $genre->id, // Уникальный ID для каждой кнопки
+    <?php foreach ($tags as $tag): ?>
+        <?= Html::checkbox('tags[]', false, [
+            'value' => $tag->id,
+            'label' => $tag->tag_type,  // Добавляем отображаемое название жанра
+            'id' => 'tag-' . $tag->id, // Уникальный ID для каждой кнопки
         ]); ?>
     <?php endforeach; ?>
 </div>
-
+<?= Html::a('Create tags',['site/create-tags'],['class'=>'btn btn-primary']) ?>
 <?= Html::submitButton('отправить', ['class' => 'submitButton']); ?>
 
 <?php ActiveForm::end(); ?>

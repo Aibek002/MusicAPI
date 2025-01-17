@@ -14,7 +14,7 @@ class Post extends ActiveRecord
     public function rules()
     {
         return [
-            [['titlePost','descriptionPost','nameAudioFile','postCreator','genre_id'],'required'],
+            [['titlePost','descriptionPost','nameAudioFile','postCreator','tag_id'],'required'],
             [['titlePost'], 'string', 'max' => 50],
             [['descriptionPost'], 'string', 'min'=>10],
             [['nameAudioFile'], 'string', 'max' => 100],

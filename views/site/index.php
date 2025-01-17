@@ -1,53 +1,63 @@
 <?php
 
+use yii\helpers\Html;
+use yii\widgets\LinkPager;
+
 /** @var yii\web\View $this */
 
-$this->title = 'My Yii Application';
+$this->title = 'Music';
 ?>
 <div class="site-index">
 
     <div class="jumbotron text-center bg-transparent mt-5 mb-5">
-        <h1 class="display-4">Congratulations!</h1>
+        <h1 class="display-4">Listen to music with us!</h1>
 
         <p class="lead">You have successfully created your Yii-powered application.</p>
 
-        <p><a class="btn btn-lg btn-success" href="https://www.yiiframework.com">Get started with Yii</a></p>
+        <p>
+        <div class="tags">
+            <p>Filter by tags:</p>
+            <?= Html::a('All musics', ['site/index'], ['class' => 'btn btn-primary']) ?>
+            <?php foreach ($tags as $tag): ?>
+                <?= Html::a($tag->tag_type, ['site/index', 'tag_id' => $tag->id], ['class' => 'btn btn-primary']) ?>
+            <?php endforeach; ?>
+        </div>
+        <div class="sort-links">
+            <p>Sorted by:</p>
+            <?= Html::a('Title (Ascending)',$sort->createUrl('titlePost',SORT_ASC));?>
+            <?= Html::a('Title (Descending)',$sort->createUrl('titlePost', SORT_DESC));?>
+            <?= Html::a('Date create (Ascending)',$sort->createUrl('createAt',SORT_ASC));?>
+            <?= Html::a('Date create (Descending)',$sort->createUrl('createAt',SORT_DESC));?>
+
+        </div>
+        </p>
     </div>
 
     <div class="body-content">
 
         <div class="row">
-            <div class="col-lg-4 mb-3">
-                <h2>Heading</h2>
+            <?php foreach ($post_music as $music): ?>
+                <div class="col-lg-4 mb-3">
+                    <h2><?php $music->titlePost ?></h2>
 
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
+                    <!-- <p></p> -->
 
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/doc/">Yii Documentation &raquo;</a></p>
-            </div>
-            <div class="col-lg-4 mb-3">
-                <h2>Heading</h2>
+                    <h2><?= Html::encode($music->titlePost) ?></h2>
+                    <audio controls>
+                        <source src="<?= Yii::getAlias('@web') . '/musicsPost/' . Html::encode($music->nameAudioFile) ?>" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
 
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
+                    <!-- <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/doc/">Yii Documentation &raquo;</a></p> -->
+                </div>
+            <?php endforeach ?>
 
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/forum/">Yii Forum &raquo;</a></p>
-            </div>
-            <div class="col-lg-4">
-                <h2>Heading</h2>
 
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/extensions/">Yii Extensions &raquo;</a></p>
-            </div>
         </div>
 
     </div>
 </div>
+<!-- Пагинация -->
+<?= LinkPager::widget([
+    'pagination' => $pagination,
+]) ?>
