@@ -113,21 +113,36 @@ class SiteController extends Controller
         return $this->redirect($to);
     }
 
-    public function actionCreatePost()
+    public function actionCreatePost($id = null)
     {
         $request = Yii::$app->request;
 
         $audioFile = UploadedFile::getInstanceByName('nameAudioFile');
-        $post = new Post();
+        $post = $id ? Post::findOne($id) : new Post();
         $tags = Tags::find()->all();
-
+    
         if ($request->isPost) {
-            $file =  $this->prepareFile($audioFile);
-            $compressFile = $this->processAudioFile($audioFile, $file);
-            if ($compressFile) {
-                $this->createPostFormRequest($post, $request, $compressFile);
+            // Подготовка файла
+            $file = $this->prepareFile($audioFile);
+    
+            // Если новый файл был загружен, обработаем его
+            if ($audioFile) {
+                // Если пост существует и файл изменен, удаляем старый файл
+                if ($post->id && file_exists(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile))) {
+                    unlink(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile)); // Удаляем старый файл
+                }
+    
+                // Сжимаем новый файл
+                $compressedFile = $this->processAudioFile($audioFile, $file);
+                if ($compressedFile) {
+                    $this->createPostFormRequest($post, $request, $compressedFile);
+                }
+            } else {
+                // Если файл не загружен, используем старый файл
+                $this->createPostFormRequest($post, $request, $post->nameAudioFile);
             }
         }
+    
         return $this->render('create-post', ['post' => $post, 'tags' => $tags]);
     }
     private function compressMp3($filePath)
@@ -226,6 +241,32 @@ class SiteController extends Controller
         }
         return $this->render('create-tags', ['tags' => $tags]);
     }
+    public function actionDelete($id)
+{
+    $post = Post::findOne($id);
+
+    if (!$post) {
+        throw new \yii\web\NotFoundHttpException('Post not found.');
+    }
+
+    if ($post->postCreator !== Yii::$app->user->id) {
+        throw new \yii\web\ForbiddenHttpException('You are not allowed to delete this post.');
+    }
+   $filePath = Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile);
+
+    
+    if (file_exists($filePath)) {
+        unlink($filePath); 
+    }
+    if ($post->delete()) {
+        Yii::$app->session->setFlash('success', 'Post successfully deleted!');
+    } else {
+        Yii::$app->session->setFlash('error', 'Failed to delete the post.');
+    }
+
+    return $this->redirect(['site/index']);
+}
+
     public function actionLogout()
     {
         $user = Yii::$app->user;
