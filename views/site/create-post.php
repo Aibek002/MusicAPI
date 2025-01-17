@@ -30,7 +30,9 @@ use yii\helpers\Url;
         ]); ?>
     <?php endforeach; ?>
 </div>
-<?= Html::a('Create tags',['site/create-tags'],['class'=>'btn btn-primary']) ?>
-<?= Html::submitButton('отправить', ['class' => 'submitButton']); ?>
+
+<?= Html::a('Create tags',['site/create-tags']) ?>
+<br/>
+<?= Html::submitButton('отправить', ['class'=>'btn btn-primary']) ?>
 
 <?php ActiveForm::end(); ?>
