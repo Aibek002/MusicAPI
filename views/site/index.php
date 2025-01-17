@@ -11,7 +11,6 @@ $this->title = 'Music';
 
     <div class="jumbotron text-center">
         <h1 class="display-4">Listen to music with us!</h1>
-        <p class="lead">You have successfully created your Yii-powered application.</p>
 
         <div class="tags">
             <h5>Filter by tags:</h5>
