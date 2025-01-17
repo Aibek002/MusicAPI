@@ -14,11 +14,13 @@ class m250114_111547_create_user_table extends Migration
     {
         $this->createTable('{{%user}}', [
             'id' => $this->primaryKey(),
-            'email' => $this->string() ,
+            'email' => $this->string(),
+            'username' => $this->string(),
             'name' => $this->string(),
             'surname' => $this->string(),
             'created_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP'),
             'updated_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
+            'auth_key' => $this->string(),
         ]);
     }
 

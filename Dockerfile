@@ -3,9 +3,13 @@ FROM php:8.3-fpm
 RUN apt-get update 
 RUN docker-php-ext-install mysqli pdo pdo_mysql \
     && docker-php-ext-enable pdo_mysql \
-    && apt-get install -y nginx 
+    && apt-get install -y nginx \
+    && apt-get install -y ffmpeg
+ 
 
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+
 COPY . /var/www/html
 RUN nginx -t
 WORKDIR /var/www/html
