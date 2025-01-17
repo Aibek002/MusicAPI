@@ -39,16 +39,11 @@ $this->title = 'Music';
             <?php foreach ($post_music as $music): ?>
                 <div class="col-lg-4 mb-3">
                     <h2><?php $music->titlePost ?></h2>
-
-                    <!-- <p></p> -->
-
                     <h2><?= Html::encode($music->titlePost) ?></h2>
                     <audio controls>
                         <source src="<?= Yii::getAlias('@web') . '/musicsPost/' . Html::encode($music->nameAudioFile) ?>" type="audio/mpeg">
                         Your browser does not support the audio element.
                     </audio>
-
-                    <!-- <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/doc/">Yii Documentation &raquo;</a></p> -->
                 </div>
             <?php endforeach ?>
 
@@ -57,7 +52,6 @@ $this->title = 'Music';
 
     </div>
 </div>
-<!-- Пагинация -->
 <?= LinkPager::widget([
     'pagination' => $pagination,
 ]) ?>

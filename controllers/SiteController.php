@@ -123,11 +123,27 @@ class SiteController extends Controller
 
         if ($request->isPost) {
             $file =  $this->prepareFile($audioFile);
-            if ($this->processAudioFile($audioFile, $file)) {
-                $this->createPostFormRequest($post, $request, $file);
+            $compressFile = $this->processAudioFile($audioFile, $file);
+            if ($compressFile) {
+                $this->createPostFormRequest($post, $request, $compressFile);
             }
         }
         return $this->render('create-post', ['post' => $post, 'tags' => $tags]);
+    }
+    private function compressMp3($filePath)
+    {
+        $compressedFilePath = pathinfo($filePath, PATHINFO_DIRNAME) . '/' . pathinfo($filePath, PATHINFO_FILENAME) . '_compressed.mp3';
+        $compressedFile = pathinfo($filePath, PATHINFO_FILENAME) . '_compressed.mp3';
+        $command = "ffmpeg -i $filePath -vn -ar 44100 -ac 2 -b:a 128k $compressedFilePath";
+        exec($command);
+
+        if (file_exists($compressedFilePath)) {
+            Yii::$app->session->setFlash('success', 'File successfully compresed');
+            unlink($filePath); 
+            return $compressedFile;
+        }
+
+        return $filePath;  
     }
     private function prepareFile($audioFile)
     {
@@ -163,8 +179,11 @@ class SiteController extends Controller
             }
         }
 
-        return true;
+
+
+        return  $compresedFile = $this->compressMp3($filePath);
     }
+
 
     private function savePost(Post $post)
     {

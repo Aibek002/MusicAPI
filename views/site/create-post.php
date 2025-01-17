@@ -25,8 +25,8 @@ use yii\helpers\Url;
     <?php foreach ($tags as $tag): ?>
         <?= Html::checkbox('tags[]', false, [
             'value' => $tag->id,
-            'label' => $tag->tag_type,  // Добавляем отображаемое название жанра
-            'id' => 'tag-' . $tag->id, // Уникальный ID для каждой кнопки
+            'label' => $tag->tag_type,  
+            'id' => 'tag-' . $tag->id, 
         ]); ?>
     <?php endforeach; ?>
 </div>
