@@ -4,15 +4,8 @@ namespace app\controllers;
 
 use app\components\AuthHandler;
 use yii\filters\auth\HttpBearerAuth;
-use yii\helpers\Url;
 use Yii;
-use yii\httpclient\Client;
-use yii\filters\AccessControl;
 use yii\web\Controller;
-use yii\web\Response;
-use yii\filters\VerbFilter;
-use app\models\LoginForm;
-use app\models\ContactForm;
 use app\models\Tags;
 use app\models\Post;
 use app\models\User;
@@ -26,101 +19,100 @@ class SiteController extends Controller
 
 
     public function behaviors()
-{
-    $behaviors = parent::behaviors();
-    $behaviors['authenticator'] = [
-        'class' => HttpBearerAuth::class,
-        'except' => ['auth-callback'], 
-        'optional'=>['login'],
-       
-    ];
-   
-    
+    {
+        $behaviors = parent::behaviors();
+        $behaviors['authenticator'] = [
+            'class' => HttpBearerAuth::class,
+            'except' => ['auth-callback'],
+            'optional' => ['login'],
 
-    return $behaviors;
-
-}
-public function beforeAction($action)
-{
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
-    $accessToken = $_SESSION['access_token'] ?? null;
-    $refreshToken = $_SESSION['refresh_token'] ?? null;
-    $expiresAt = $_SESSION['token_expires_at'] ?? null;
-    
-    // var_dump($accessToken);die;
-
-     if ($accessToken && $expiresAt && $expiresAt - time() < 300) { 
-        if ($refreshToken) {
-            $newTokens = $this->refreshAccessToken($refreshToken);
-            // var_dump($newTokens);die;
-            if ($newTokens) {
-                $accessToken = $newTokens['access_token'];
-                $refreshToken = $newTokens['refresh_token'];
-                $expiresAt = $newTokens['token_expires_at'];
-            } else {
-                Yii::$app->response->redirect(['site/login'])->send();
-                return false; 
-            }
-        } else {
-            Yii::$app->response->redirect(['site/auth'])->send();
-            return false; 
-        }
-    }
-     if ($this->action->id !== 'auth-callback'&&$this->action->id !== 'login' && !$accessToken) {
-        Yii::$app->response->redirect(['site/login'])->send();
-        return false; 
-    }
-    if($accessToken){
-        Yii::$app->request->headers->set('Authorization', 'Bearer ' . $accessToken);
-    }
-    return parent::beforeAction($action);
-}
-
-private function refreshAccessToken($refreshToken)
-{
-    $client = new \GuzzleHttp\Client(); // Используем Guzzle для HTTP-запросов
-
-    try {
-
-        $response = $client->post('http://192.168.122.85:8180/realms/music-api/protocol/openid-connect/token', [
-            'form_params' => [
-                'grant_type' => 'refresh_token',
-                'refresh_token' => $refreshToken,
-                'client_id' => 'musiccli',
-                'client_secret' => '9bF9w4mpBxIlrkAnqz95EFAXHYCl88M3',
-            ],
-        ]);
-
-        $data = json_decode($response->getBody(), true);
-        $user = User::findOne(['refresh_token' => $refreshToken]);
-        $_SESSION['access_token'] = $data['access_token'];
-        $_SESSION['refresh_token'] = $data['refresh_token'];
-        $_SESSION['token_expires_at'] = time() + $data['expires_in'];
-        
-        if($user){
-
-        $user->access_token = $data['access_token'];
-        $user->refresh_token = $data['refresh_token'];
-        $user->access_token_expires_at = time() + $data['expires_in'];
-        $refreshTokenExpiresIn = $data['refresh_expires_in'] ?? 0;
-
-        if(!$user->save()){
-        Yii::error('Ошибка при сохранении обновлённых токенов для пользователя');
-        }
-    }
-
-        return [
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'],
-            'token_expires_at' => time() + $data['expires_in'],
         ];
-    } catch (\Exception $e) {
-        Yii::error('Failed to refresh token: ' . $e->getMessage());
-        return null; 
+
+
+
+        return $behaviors;
     }
-}
+    public function beforeAction($action)
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        $accessToken = $_SESSION['access_token'] ?? null;
+        $refreshToken = $_SESSION['refresh_token'] ?? null;
+        $expiresAt = $_SESSION['token_expires_at'] ?? null;
+
+
+        if ($accessToken && $expiresAt && $expiresAt - time() < 300) {
+            if ($refreshToken) {
+                $newTokens = $this->refreshAccessToken($refreshToken);
+                if ($newTokens) {
+                    $accessToken = $newTokens['access_token'];
+                    $refreshToken = $newTokens['refresh_token'];
+                    $expiresAt = $newTokens['token_expires_at'];
+                } else {
+                    Yii::$app->response->redirect(['site/login'])->send();
+                    return false;
+                }
+            } else {
+                Yii::$app->response->redirect(['site/auth'])->send();
+                return false;
+            }
+        }
+        if ($this->action->id !== 'auth-callback' && $this->action->id !== 'login' && !$accessToken) {
+            Yii::$app->response->redirect(['site/login'])->send();
+            return false;
+        }
+        if ($accessToken) {
+            Yii::$app->request->headers->set('Authorization', 'Bearer ' . $accessToken);
+        }
+        return parent::beforeAction($action);
+    }
+
+    private function refreshAccessToken($refreshToken)
+    {
+        $client = new \GuzzleHttp\Client();
+
+        try {
+
+            $response = $client->post('http://192.168.122.85:8180/realms/music-api/protocol/openid-connect/token', [
+                'form_params' => [
+                    'grant_type' => 'refresh_token',
+                    'refresh_token' => $refreshToken,
+                    'client_id' => 'musiccli',
+                    'client_secret' => '9bF9w4mpBxIlrkAnqz95EFAXHYCl88M3',
+                ],
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+            $user = User::findOne(['refresh_token' => $refreshToken]);
+            $_SESSION['access_token'] = $data['access_token'];
+            $_SESSION['refresh_token'] = $data['refresh_token'];
+            $_SESSION['token_expires_at'] = time() + $data['expires_in'];
+// var_dump($_SESSION['access_token']);die;
+            if ($user) {
+
+                $user->access_token = $data['access_token'];
+                $user->refresh_token = $data['refresh_token'];
+                $user->access_token_expires_at = time() + $data['expires_in'];
+                $user->refresh_token_expires_at = $data['refresh_expires_in'] ?? 0;
+
+                if (!$user->save()) {
+                    Yii::error('Ошибка при сохранении обновлённых токенов для пользователя');
+                }
+            }else{
+            return $this->redirect(['site/login']);
+            }
+
+            return [
+                'access_token' => $data['access_token'],
+                'refresh_token' => $data['refresh_token'],
+                'token_expires_at' => time() + $data['expires_in'],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Failed to refresh token: ' . $e->getMessage());
+            return null;
+        }
+    }
 
     public function actions()
     {
@@ -137,7 +129,7 @@ private function refreshAccessToken($refreshToken)
     }
     public function actionError()
     {
-        $exception = Yii::$app->errorHandler->exception;    
+        $exception = Yii::$app->errorHandler->exception;
         if ($exception instanceof UnauthorizedHttpException) {
             return $this->redirect(['site/login']);
         }
@@ -156,7 +148,7 @@ private function refreshAccessToken($refreshToken)
 
         $pagination = new Pagination([
             'defaultPageSize' => 10,
-            'totalCount' => $query->count(), 
+            'totalCount' => $query->count(),
         ]);
 
 
@@ -190,24 +182,22 @@ private function refreshAccessToken($refreshToken)
             'tags' => $tags,
             'sort' => $sort
         ]);
-       
     }
-   
-    
+
+
 
 
 
     public function actionLogin()
     {
-        
-            $user = Yii::$app->user;
-            if (!$user->isGuest && $user->identity->access_token) {
-                return $this->redirect(['site/index']);
-            }
-            $cli = Yii::$app->authClientCollection->getClient("keycloak");
-            $authUrl = $cli->buildAuthUrl();
-            return $this->redirect($authUrl);
 
+        $user = Yii::$app->user;
+        if (!$user->isGuest && $user->identity->access_token) {
+            return $this->redirect(['site/index']);
+        }
+        $cli = Yii::$app->authClientCollection->getClient("keycloak");
+        $authUrl = $cli->buildAuthUrl();
+        return $this->redirect($authUrl);
     }
 
 
@@ -224,7 +214,7 @@ private function refreshAccessToken($refreshToken)
 
             if ($audioFile) {
                 if ($post->id && file_exists(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile))) {
-                    unlink(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile)); 
+                    unlink(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile));
                 }
 
                 $compressedFile = $this->processAudioFile($audioFile, $file);
@@ -326,7 +316,7 @@ private function refreshAccessToken($refreshToken)
         $request = Yii::$app->request;
         $tags = new Tags();
         if ($request->post('tags')) {
-            
+
             $tags->tag_type = $request->post('tags');
             if ($tags->save()) {
                 Yii::$app->session->setFlash('success', 'Tags created successfully!');
@@ -363,9 +353,8 @@ private function refreshAccessToken($refreshToken)
 
     public function actionLogout()
     {
-        Yii::$app->user->logout(); 
+        Yii::$app->user->logout();
         return $this->redirect(['site/index']);
-       
     }
 
     public function actionAbout()
@@ -380,7 +369,7 @@ private function refreshAccessToken($refreshToken)
 
     public function actionAuthCallback()
     {
-       
+
         try {
             $req = Yii::$app->request;
 
@@ -389,33 +378,31 @@ private function refreshAccessToken($refreshToken)
 
             $token = $cli->fetchAccessToken($authcode);
             $accessToken = $token->getToken();
-            $refreshToken =$token->getParam('refresh_token');
-            $AccesstokenExpiresAt =$token->getParam('expires_in');
-            $RefreshtokenExpiresAt =$token->getParam('refresh_expires_in');
+            $refreshToken = $token->getParam('refresh_token');
+            $AccesstokenExpiresAt = $token->getParam('expires_in');
+            $RefreshtokenExpiresAt = $token->getParam('refresh_expires_in');
             // var_dump($accessToken);die;
-                // Сохранение токенов
-                $_SESSION['access_token'] = $accessToken;
-                $_SESSION['refresh_token'] = $refreshToken;
-                $_SESSION['token_expires_at'] = time() + $AccesstokenExpiresAt;
-                $_SESSION['refresh_token_expires_at'] = time() + $RefreshtokenExpiresAt;
-            
-            if(!$token){
-                throw new ServerErrorHttpException("Не удалось получить токен");
+            // Сохранение токенов
+            $_SESSION['access_token'] = $accessToken;
+            $_SESSION['refresh_token'] = $refreshToken;
+            $_SESSION['token_expires_at'] = time() + $AccesstokenExpiresAt;
+            $_SESSION['refresh_token_expires_at'] = time() + $RefreshtokenExpiresAt;
 
+            if (!$token) {
+                throw new ServerErrorHttpException("Не удалось получить токен");
             }
             $cli->setAccessToken($token);
-            $user = (new AuthHandler($cli, $accessToken, $refreshToken,$AccesstokenExpiresAt,$RefreshtokenExpiresAt))->handle();
+            $user = (new AuthHandler($cli, $accessToken, $refreshToken, $AccesstokenExpiresAt, $RefreshtokenExpiresAt))->handle();
 
             Yii::$app->user->login($user);
-            if (Yii::$app->user->isGuest) { 
+            if (Yii::$app->user->isGuest) {
 
                 $msg = Yii::t("site", "Не удалось авторизовать пользователя");
                 throw new ServerErrorHttpException($msg);
-            }else{
+            } else {
                 return $this->goHome();
             }
-
-        } catch     (\Exception $e) {   
+        } catch (\Exception $e) {
             Yii::error("Ошибка при аутентификации: " . $e->getMessage());
             throw new ServerErrorHttpException("Ошибка при аутентификации");
         }
