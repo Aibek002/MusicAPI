@@ -13,7 +13,6 @@ use yii\helpers\Url;
     ]
 ]);
 ?>
-
 <?= $form->field($post, 'titlePost')->textInput(['name' => 'titlePost']); ?>
 <?= $form->field($post, 'descriptionPost')->textarea(['name' => 'descriptionPost']); ?>
 <?= $form->field($post, 'nameAudioFile')->fileInput(['name' => 'nameAudioFile']); ?>
@@ -30,7 +29,9 @@ use yii\helpers\Url;
         ]); ?>
     <?php endforeach; ?>
 </div>
-<?= Html::a('Create tags',['site/create-tags'],['class'=>'btn btn-primary']) ?>
-<?= Html::submitButton('отправить', ['class' => 'submitButton']); ?>
+
+<?= Html::a('Create tags',['site/create-tags']) ?>
+<br/>
+<?= Html::submitButton('отправить', ['class'=>'btn btn-primary']) ?>
 
 <?php ActiveForm::end(); ?>

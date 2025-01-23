@@ -19,8 +19,8 @@ $config = [
                     "class" => "yii\authclient\OpenIdConnect",
                     "clientId" => 'musiccli',
                     "clientSecret" => '9bF9w4mpBxIlrkAnqz95EFAXHYCl88M3',
-                    "returnUrl" => 'http://localhost:80/index.php?r=site/auth-callback',
-                    "issuerUrl" => 'http://192.168.138.85:8180/realms/music-api/',
+                    "returnUrl" => 'http://localhost/index.php?r=site/auth-callback',
+                    "issuerUrl" => 'http://192.168.122.85:8180/realms/music-api/',
                     "name" => "keycloak",
                     "validateAuthState" => true,
 
@@ -35,17 +35,31 @@ $config = [
                 ],
             ],
         ],
-
+  'httpClient' => [
+        'class' => \yii\httpclient\Client::class,
+    ],
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'G8sGVSeYi4RqnvsY0wqa5oNVd8TXnNLl',
+            // 'csrfParam' => '_csrf',
+            // 'enableCsrfValidation' => true,
+            'enableCsrfValidation' => false, 
+            
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
+        'session' => [
+        'class' => 'yii\web\Session',
+        'cookieParams' => [
+            'httponly' => true, // добавьте если еще нет
+            'secure' => false,  // установите в true, если используете https
+        ],
+    ],
         'user' => [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
+            'enableSession' => false
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -61,7 +75,7 @@ $config = [
             'targets' => [
                 [
                     'class' => 'yii\log\FileTarget',
-                    'levels' => ['error', 'warning'],
+                    'levels' => ['error', 'warning', 'info'],
                     'logFile' => '@runtime/logs/app.log', // Убедитесь, что путь правильный
                 ],
             ],

@@ -46,19 +46,19 @@ class m250115_183421_create_post_table extends Migration
             'CASCADE'
         );
 
-        // creates index for column `genre_id`
+        // creates index for column `tags_id`
         $this->createIndex(
-            '{{%idx-post-genre_id}}',
+            '{{%idx-post-tags_id}}',
             '{{%post}}',
-            'genre_id'
+            'tags_id'
         );
 
-        // add foreign key for table `{{%audio_genres_catalog}}`
+        // add foreign key for table `{{%audio_tags_catalog}}`
         $this->addForeignKey(
-            '{{%fk-post-genre_id}}',
+            '{{%fk-post-tags_id}}',
             '{{%post}}',
-            'genre_id',
-            '{{%audio_genres_catalog}}',
+            'tags_id',
+            '{{%audio_tags_catalog}}',
             'id',
             'CASCADE'
         );
