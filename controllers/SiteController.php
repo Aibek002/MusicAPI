@@ -30,7 +30,7 @@ class SiteController extends Controller
     $behaviors = parent::behaviors();
     $behaviors['authenticator'] = [
         'class' => HttpBearerAuth::class,
-        'except' => ['auth-callback'], // Исключаем полный путь
+        'except' => ['auth-callback'], 
         'optional'=>['login','index'],
        
     ];
@@ -42,7 +42,6 @@ class SiteController extends Controller
 }
 public function beforeAction($action)
 {
-    // Добавляем токен в заголовки для всех запросов
     if ($accessToken = Yii::$app->request->cookies->getValue('access_token')) {
         Yii::$app->request->headers->set('Authorization', 'Bearer ' . $accessToken);
     }
@@ -64,7 +63,7 @@ public function beforeAction($action)
 
     public function actionIndex()
     {
-        $tagId = Yii::$app->request->get('tag_id'); // ID выбранного тега
+        $tagId = Yii::$app->request->get('tag_id');
         $query = Post::find();
         $tags = Tags::find()->all();
 
@@ -121,20 +120,8 @@ public function beforeAction($action)
             if (!$user->isGuest && $user->identity->access_token) {
                 return $this->redirect(['site/index']);
             }
-            // $cli = Yii::$app->authClientCollection->getClient("keycloak");
-            // $to = Url::to(["auth", "authclient" => $cli->getName()]);
-            // $authUrl = "http://localhost:8180/realms/music-api/protocol/openid-connect/auth?" . http_build_query([
-            //     'client_id'     => 'musiccli',
-            //     'redirect_uri'  => 'http://localhost/index.php?r=site/auth-callback', // URL колбэка
-            //     'response_type' => 'code',
-            //     'scope'         => 'openid email profile',
-            // ]);
             $cli = Yii::$app->authClientCollection->getClient("keycloak");
-    
-            // Получаем URL для перенаправления на страницу авторизации Keycloak
             $authUrl = $cli->buildAuthUrl();
-            
-            // Перенаправляем пользователя на страницу аутентификации
             return $this->redirect($authUrl);
 
     }
@@ -149,23 +136,18 @@ public function beforeAction($action)
         $tags = Tags::find()->all();
 
         if ($request->isPost) {
-            // Подготовка файла
             $file = $this->prepareFile($audioFile);
 
-            // Если новый файл был загружен, обработаем его
             if ($audioFile) {
-                // Если пост существует и файл изменен, удаляем старый файл
                 if ($post->id && file_exists(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile))) {
                     unlink(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile)); // Удаляем старый файл
                 }
 
-                // Сжимаем новый файл
                 $compressedFile = $this->processAudioFile($audioFile, $file);
                 if ($compressedFile) {
                     $this->createPostFormRequest($post, $request, $compressedFile);
                 }
             } else {
-                // Если файл не загружен, используем старый файл
                 $this->createPostFormRequest($post, $request, $post->nameAudioFile);
             }
         }
@@ -326,10 +308,6 @@ public function beforeAction($action)
             $refreshToken =$token->getParam('refresh_token');
             $AccesstokenExpiresAt =$token->getParam('expires_in');
             $RefreshtokenExpiresAt =$token->getParam('refresh_expires_in');
-       
-            // var_dump($authHeader);
-            // die;
-            
             if (!$token) {
                 throw new ServerErrorHttpException("Не удалось получить токен");
             }
@@ -338,12 +316,10 @@ public function beforeAction($action)
             Yii::$app->response->cookies->add(new \yii\web\Cookie([
                 'name' => 'access_token',
                 'value' =>  $accessToken,
-                'httpOnly' => true, // Обеспечивает безопасность
-                'secure' => true, // Убедитесь, что соединение использует HTTPS
+                'httpOnly' => true, 
+                'secure' => true,
                 'expire' => time() + $AccesstokenExpiresAt,
             ]));
-            // var_dump($);die;
-
             Yii::$app->user->login($user);
             if (Yii::$app->user->isGuest) { 
 
