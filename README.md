@@ -4,21 +4,21 @@ MusicAPI — это API для работы с музыкальными данн
 
 ## Установка
 
-### 1. Клонирование репозитория
+### Клонирование репозитория
 
 Сначала клонируйте репозиторий на свой локальный компьютер:
 
 ```bash
 git clone https://github.com/Aibek002/musicapi.git
 ```
-### 2. Запуск с помощью Docker
+###  Запуск с помощью Docker
 Для того чтобы запустить проект с использованием Docker, выполните следующие шаги:
 
-#### 1. Перейдите в директорию проекта:
+#### Перейдите в директорию проекта:
 ```bash
 cd musicapi    
 ```
-#### 2. Запустите Docker контейнеры:
+####  Запустите Docker контейнеры:
 ```bash
 docker-compose up --build
 ```
@@ -63,7 +63,7 @@ composer install
 ### Интеграция с MusicAPI
 Для интеграции MusicAPI с Keycloak настройте конфигурацию аутентификации с использованием OAuth2. Используйте полученные данные из Keycloak (Client ID и Client Secret), чтобы настроить API для аутентификации через Keycloak.
 
-#### 1. Подключение библиотеки Keycloak
+####  Подключение библиотеки Keycloak
 Для того чтобы интегрировать Keycloak с вашим приложением, нужно использовать соответствующие библиотеки. В случае PHP приложения вам нужно будет подключить библиотеку для работы с OAuth2 и Keycloak.
 
 #### Установка библиотеки
@@ -113,5 +113,157 @@ composer require keycloak/keycloak-php
         ],
     ],
 ],
+```
+#### 2. Конфигурация контроллеров
+В вашем контроллере SiteController необходимо настроить обработку аутентификации, получения токена и редиректа для callback-а. В коде ниже показано, как это делать.
+
+Обновите метод actions:
+```php
+public function actions()
+{
+    return [
+        'auth' => [
+            'class' => 'yii\authclient\AuthAction',
+            'clientCollection' => 'authClientCollection',
+        ],
+    ];
+}
+```
+Добавьте методы для обработки входа и callback:
+actionLogin: Инициирует процесс аутентификации с Keycloak.
+```php
+public function actionLogin()
+{
+    $user = Yii::$app->user;
+    if (!$user->isGuest && $user->identity->access_token) {
+        return $this->redirect(['site/index']);
+    }
+    $cli = Yii::$app->authClientCollection->getClient("keycloak");
+    $authUrl = $cli->buildAuthUrl();
+    return $this->redirect($authUrl);
+}
+```
+actionAuthCallback: Обрабатывает редирект с Keycloak, получает токен и авторизует пользователя.
+```php
+public function actionAuthCallback()
+{
+    try {
+        $req = Yii::$app->request;
+
+        // Получаем код из запроса
+        $authcode = $req->get("code");
+
+        // Получаем клиента Keycloak
+        $cli = Yii::$app->authClientCollection->getClient("keycloak");
+
+        // Получаем токен
+        $token = $cli->fetchAccessToken($authcode);
+        $accessToken = $token->getToken();
+        $refreshToken = $token->getParam('refresh_token');
+        $accessTokenExpiresAt = $token->getParam('expires_in');
+        $refreshTokenExpiresAt = $token->getParam('refresh_expires_in');
+
+        if (!$token) {
+            throw new ServerErrorHttpException("Не удалось получить токен");
+        }
+
+        // Устанавливаем токен для клиента
+        $cli->setAccessToken($token);
+
+        // Обрабатываем пользователя
+        $user = (new AuthHandler($cli, $accessToken, $refreshToken, $accessTokenExpiresAt, $refreshTokenExpiresAt))->handle();
+
+        // Сохраняем токен в куках
+        Yii::$app->response->cookies->add(new \yii\web\Cookie([
+            'name' => 'access_token',
+            'value' => $accessToken,
+            'httpOnly' => true, 
+            'secure' => true,
+            'expire' => time() + $accessTokenExpiresAt,
+        ]));
+
+        // Логиним пользователя
+        Yii::$app->user->login($user);
+
+        // Если пользователь не авторизован
+        if (Yii::$app->user->isGuest) {
+            throw new ServerErrorHttpException("Не удалось авторизовать пользователя");
+        }
+
+        return $this->goHome();
+    } catch (\Exception $e) {
+        Yii::error("Ошибка при аутентификации: " . $e->getMessage());
+        throw new ServerErrorHttpException("Ошибка при аутентификации");
+    }
+}
+```
+Обновите middleware для проверки авторизации
+```php
+public function beforeAction($action)
+{
+    if ($accessToken = Yii::$app->request->cookies->getValue('access_token')) {
+        Yii::$app->request->headers->set('Authorization', 'Bearer ' . $accessToken);
+    }
+    return parent::beforeAction($action);
+}
+```
+ Работа с пользователями
+Для работы с пользователями при аутентификации создайте компонент AuthHandler, который будет обрабатывать получение данных пользователя из Keycloak и сохранять их в базу данных:
+```php
+namespace app\components;
+
+use Yii;
+use app\models\User;
+use yii\authclient\ClientInterface;
+
+class AuthHandler
+{
+    private $client;
+    private $accessToken;
+    private $refreshToken;
+    private $AccesstokenExpiresAt;
+    private $RefreshtokenExpiresAt;
+
+    public function __construct(ClientInterface $client, $accessToken, $refreshToken, $AccesstokenExpiresAt, $RefreshtokenExpiresAt)
+    {
+        $this->client = $client;
+        $this->accessToken = $accessToken;
+        $this->refreshToken = $refreshToken;
+        $this->AccesstokenExpiresAt = $AccesstokenExpiresAt;
+        $this->RefreshtokenExpiresAt = $RefreshtokenExpiresAt;
+    }
+
+    public function handle()
+    {
+        $userAttributes = $this->client->getUserAttributes();
+        $email = $userAttributes['email'] ?? null;
+        $name = $userAttributes['given_name'] ?? null;
+        $surname = $userAttributes['family_name'] ?? null;
+        $username = $userAttributes['preferred_username'] ?? null;
+
+        $user = User::find()->where(['email' => $email])->one();
+
+        if (!$user) {
+            $user = new User([
+                'email' => $email,
+                'name' => $name,
+                'surname' => $surname,
+                'username' => $username,
+                'auth_key' => Yii::$app->security->generateRandomString(),
+            ]);
+        }
+
+        $user->access_token = $this->accessToken;
+        $user->refresh_token = $this->refreshToken;
+        $user->access_token_expires_at = time() + $this->AccesstokenExpiresAt;
+        $user->refresh_token_expires_at = time() + $this->RefreshtokenExpiresAt;
+
+        if (!$user->save()) {
+            throw new \yii\db\Exception('Failed to save user data.');
+        }
+
+        return $user;
+    }
+}
 ```
 
