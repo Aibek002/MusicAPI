@@ -31,7 +31,7 @@ class SiteController extends Controller
     $behaviors['authenticator'] = [
         'class' => HttpBearerAuth::class,
         'except' => ['auth-callback'], 
-        'optional'=>['login','index'],
+        'optional'=>['login', 'index'],
        
     ];
    
@@ -60,9 +60,18 @@ public function beforeAction($action)
             ],
         ];
     }
+    public function actionError()
+    {
+        $exception = Yii::$app->errorHandler->exception;    
+        if ($exception instanceof UnauthorizedHttpException) {
+            return $this->redirect(['site/login']);
+        }
 
+        return $this->render('error', ['exception' => $exception]);
+    }
     public function actionIndex()
     {
+       if(!Yii::$app->user->isGuest){
         $tagId = Yii::$app->request->get('tag_id');
         $query = Post::find();
         $tags = Tags::find()->all();
@@ -107,6 +116,9 @@ public function beforeAction($action)
             'tags' => $tags,
             'sort' => $sort
         ]);
+       }else{
+        return  $this->redirect(['site/login']);
+       }
     }
    
     
