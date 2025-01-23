@@ -31,7 +31,7 @@ class SiteController extends Controller
     $behaviors['authenticator'] = [
         'class' => HttpBearerAuth::class,
         'except' => ['auth-callback'], 
-        'optional'=>['login', 'index'],
+        'optional'=>['login'],
        
     ];
    
@@ -42,11 +42,86 @@ class SiteController extends Controller
 }
 public function beforeAction($action)
 {
-    if ($accessToken = Yii::$app->request->cookies->getValue('access_token')) {
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+    $accessToken = $_SESSION['access_token'] ?? null;
+    $refreshToken = $_SESSION['refresh_token'] ?? null;
+    $expiresAt = $_SESSION['token_expires_at'] ?? null;
+    
+    // var_dump($accessToken);die;
+
+     if ($accessToken && $expiresAt && $expiresAt - time() < 300) { 
+        if ($refreshToken) {
+            $newTokens = $this->refreshAccessToken($refreshToken);
+            // var_dump($newTokens);die;
+            if ($newTokens) {
+                $accessToken = $newTokens['access_token'];
+                $refreshToken = $newTokens['refresh_token'];
+                $expiresAt = $newTokens['token_expires_at'];
+            } else {
+                Yii::$app->response->redirect(['site/login'])->send();
+                return false; 
+            }
+        } else {
+            Yii::$app->response->redirect(['site/auth'])->send();
+            return false; 
+        }
+    }
+     if ($this->action->id !== 'auth-callback'&&$this->action->id !== 'login' && !$accessToken) {
+        Yii::$app->response->redirect(['site/login'])->send();
+        return false; 
+    }
+    if($accessToken){
         Yii::$app->request->headers->set('Authorization', 'Bearer ' . $accessToken);
     }
     return parent::beforeAction($action);
 }
+
+private function refreshAccessToken($refreshToken)
+{
+    $client = new \GuzzleHttp\Client(); // Используем Guzzle для HTTP-запросов
+
+    try {
+
+        $response = $client->post('http://192.168.122.85:8180/realms/music-api/protocol/openid-connect/token', [
+            'form_params' => [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $refreshToken,
+                'client_id' => 'musiccli',
+                'client_secret' => '9bF9w4mpBxIlrkAnqz95EFAXHYCl88M3',
+            ],
+        ]);
+
+        $data = json_decode($response->getBody(), true);
+        $user = User::findOne(['refresh_token' => $refreshToken]);
+        $_SESSION['access_token'] = $data['access_token'];
+        $_SESSION['refresh_token'] = $data['refresh_token'];
+        $_SESSION['token_expires_at'] = time() + $data['expires_in'];
+        
+        if($user){
+
+        $user->access_token = $data['access_token'];
+        $user->refresh_token = $data['refresh_token'];
+        $user->access_token_expires_at = time() + $data['expires_in'];
+        $refreshTokenExpiresIn = $data['refresh_expires_in'] ?? 0;
+
+        if(!$user->save()){
+        Yii::error('Ошибка при сохранении обновлённых токенов для пользователя');
+        }
+    }
+
+        return [
+            'access_token' => $data['access_token'],
+            'refresh_token' => $data['refresh_token'],
+            'token_expires_at' => time() + $data['expires_in'],
+        ];
+    } catch (\Exception $e) {
+        Yii::error('Failed to refresh token: ' . $e->getMessage());
+        return null; 
+    }
+}
+
     public function actions()
     {
         return [
@@ -71,7 +146,6 @@ public function beforeAction($action)
     }
     public function actionIndex()
     {
-       if(!Yii::$app->user->isGuest){
         $tagId = Yii::$app->request->get('tag_id');
         $query = Post::find();
         $tags = Tags::find()->all();
@@ -116,9 +190,7 @@ public function beforeAction($action)
             'tags' => $tags,
             'sort' => $sort
         ]);
-       }else{
-        return  $this->redirect(['site/login']);
-       }
+       
     }
    
     
@@ -152,7 +224,7 @@ public function beforeAction($action)
 
             if ($audioFile) {
                 if ($post->id && file_exists(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile))) {
-                    unlink(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile)); // Удаляем старый файл
+                    unlink(Yii::getAlias('@webroot/musicsPost/' . $post->nameAudioFile)); 
                 }
 
                 $compressedFile = $this->processAudioFile($audioFile, $file);
@@ -320,18 +392,20 @@ public function beforeAction($action)
             $refreshToken =$token->getParam('refresh_token');
             $AccesstokenExpiresAt =$token->getParam('expires_in');
             $RefreshtokenExpiresAt =$token->getParam('refresh_expires_in');
-            if (!$token) {
+            // var_dump($accessToken);die;
+                // Сохранение токенов
+                $_SESSION['access_token'] = $accessToken;
+                $_SESSION['refresh_token'] = $refreshToken;
+                $_SESSION['token_expires_at'] = time() + $AccesstokenExpiresAt;
+                $_SESSION['refresh_token_expires_at'] = time() + $RefreshtokenExpiresAt;
+            
+            if(!$token){
                 throw new ServerErrorHttpException("Не удалось получить токен");
+
             }
             $cli->setAccessToken($token);
             $user = (new AuthHandler($cli, $accessToken, $refreshToken,$AccesstokenExpiresAt,$RefreshtokenExpiresAt))->handle();
-            Yii::$app->response->cookies->add(new \yii\web\Cookie([
-                'name' => 'access_token',
-                'value' =>  $accessToken,
-                'httpOnly' => true, 
-                'secure' => true,
-                'expire' => time() + $AccesstokenExpiresAt,
-            ]));
+
             Yii::$app->user->login($user);
             if (Yii::$app->user->isGuest) { 
 
