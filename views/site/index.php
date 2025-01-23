@@ -6,9 +6,16 @@ use yii\widgets\LinkPager;
 /** @var yii\web\View $this */
 
 $this->title = 'Music';
+
+
+// print_r(Yii::$app->request->headers->get('Authorization') . "");
 ?>
 <div class="site-index">
-
+<?php if (Yii::$app->session->hasFlash('error')): ?>
+    <div class="alert alert-danger">
+        <?php echo Yii::$app->session->getFlash('error'); ?>
+    </div>
+<?php endif; ?>
     <div class="jumbotron text-center">
         <h1 class="display-4">Listen to music with us!</h1>
 

@@ -1,70 +1,68 @@
 <?php
-
-
 namespace app\components;
 
 use Yii;
 use app\models\User;
 use yii\authclient\ClientInterface;
-use yii\web\User as WebUser;
-
 
 class AuthHandler
 {
     private $client;
+    private $accessToken;
+    private $refreshToken;
+    private $AccesstokenExpiresAt;
+    private $RefreshtokenExpiresAt;
 
-    public function __construct(ClientInterface $client)
+
+    public function __construct(ClientInterface $client, $accessToken, $refreshToken,$AccesstokenExpiresAt,$RefreshtokenExpiresAt)
     {
         $this->client = $client;
+        $this->accessToken = $accessToken;
+        $this->refreshToken = $refreshToken;
+        $this->AccesstokenExpiresAt=$AccesstokenExpiresAt;
+        $this->RefreshtokenExpiresAt=$RefreshtokenExpiresAt;
     }
 
-    public function getUserAttribute($userAttributes)
+    public function handle()
     {
-
+        // Получаем данные о пользователе от клиента (Keycloak)
+        $userAttributes = $this->client->getUserAttributes();
+        
+        // Извлекаем необходимые данные
         $email = $userAttributes['email'] ?? null;
         $name = $userAttributes['given_name'] ?? null;
         $surname = $userAttributes['family_name'] ?? null;
         $username = $userAttributes['preferred_username'] ?? null;
 
-        return compact('email', 'name', 'surname', 'username');
-    }
+        // Ищем пользователя в базе данных
+        $user = User::find()->where(['email' => $email])->one();
 
-    public function validateUser($userData)
-    {
-
-        if ($userData['email'] === null) {
-            throw new \Exception('Не получилось получить email от провайдера.');
-        }
-    }
-
-    public function saveUserAttributesOnDataBase($userData)
-    {
-
-        $user = new User([
-            'email' => $userData['email'],
-            'name' => $userData['name'],
-            'surname' => $userData['surname'],
-            'username' => $userData['username']
-        ]);
-
-        if (!$user->save()) {
-            throw new \Exception('Не удалось создать нового пользователя');
-        }
-    }
-
-
-
-    public function handle()
-    {
-        $userAttributes = $this->client->getUserAttributes();
-        $userData = $this->getUserAttribute($userAttributes);
-        $this->validateUser($userData);
-        $user = User::find()->where(['email' => $userData['email']])->one();
-
+        // Если пользователь не найден, создаем нового
         if (!$user) {
-            $this->saveUserAttributesOnDataBase($userData);
+            $user = new User([
+                'email' => $email,
+                'name' => $name,
+                'surname' => $surname,
+                'username' => $username,
+                'auth_key' => Yii::$app->security->generateRandomString(),
+            ]);
         }
 
+    
+
+        // Сохраняем токены
+        $user->access_token = $this->accessToken;
+        $user->refresh_token = $this->refreshToken;
+        $user->access_token_expires_at= time() + $this->AccesstokenExpiresAt;
+        $user->refresh_token_expires_at= time() + $this->RefreshtokenExpiresAt;
+
+        // Сохраняем данные пользователя в базе
+        if (!$user->save()) {
+            throw new \yii\db\Exception('Failed to save user data.');
+        }
+   
+    
+        
         return $user;
     }
 }

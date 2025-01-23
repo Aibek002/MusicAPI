@@ -13,7 +13,6 @@ use yii\helpers\Url;
     ]
 ]);
 ?>
-
 <?= $form->field($post, 'titlePost')->textInput(['name' => 'titlePost']); ?>
 <?= $form->field($post, 'descriptionPost')->textarea(['name' => 'descriptionPost']); ?>
 <?= $form->field($post, 'nameAudioFile')->fileInput(['name' => 'nameAudioFile']); ?>

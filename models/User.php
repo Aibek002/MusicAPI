@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
@@ -11,7 +12,7 @@ class User extends ActiveRecord implements IdentityInterface
     {
         return 'user';
     }
-    
+
     public static function findIdentity($id)
     {
         return self::findOne($id);
@@ -24,12 +25,12 @@ class User extends ActiveRecord implements IdentityInterface
 
     public function getId()
     {
-        return $this->id; 
+        return $this->id;
     }
 
     public function getAuthKey()
     {
-        return $this->auth_key; 
+        return $this->auth_key;
     }
 
     public function validateAuthKey($authKey)
@@ -39,6 +40,13 @@ class User extends ActiveRecord implements IdentityInterface
 
     public function validatePassword($password)
     {
-        return \Yii::$app->getSecurity()->validatePassword($password, $this->password_hash);
+        // return \Yii::$app->getSecurity()->validatePassword($password, $this->password_hash);
+        return $this->password_hash === $password;
     }
+    public static function findByUsername($username)
+    {
+        return static::findOne(['username' => $username]);  // Поиск по полю 'username'
+    }
+
+  
 }
