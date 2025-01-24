@@ -79,7 +79,7 @@ class SiteController extends Controller
                     'grant_type' => 'refresh_token',
                     'refresh_token' => $refreshToken,
                     'client_id' => 'musiccli',
-                    'client_secret' => '9bF9w4mpBxIlrkAnqz95EFAXHYCl88M3',
+                    'client_secret' => '4zeVGXohTLnGDcRm7UYETosSEZK2N5gn',
                 ],
             ]);
 

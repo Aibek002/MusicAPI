@@ -37,12 +37,29 @@ services:
     image: phpmyadmin/phpmyadmin
     environment:
       PMA_HOST: data
-
       MYSQL_PASSWORD: yii2basic
       MYSQL_ROOT_PASSWORD: yii2basic
 
     ports:
       - "8080:80"
+    depends_on:
+      - data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      KC_DB: mysql
+      KC_DB_URL_HOST: data
+      KC_DB_URL_DATABASE: yii2basic
+      KC_DB_USERNAME: yii2basic
+      KC_DB_PASSWORD: yii2basic
+      KC_HOSTNAME: localhost
+      KC_BOOTSTRAP_ADMIN_USERNAME: test
+      KC_BOOTSTRAP_ADMIN_PASSWORD: test
+    command: start-dev
+    ports:
+      - "8180:8080"
     depends_on:
       - data
 

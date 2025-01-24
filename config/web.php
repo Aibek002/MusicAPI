@@ -18,9 +18,9 @@ $config = [
                 "keycloak" => [
                     "class" => "yii\authclient\OpenIdConnect",
                     "clientId" => 'musiccli',
-                    "clientSecret" => '9bF9w4mpBxIlrkAnqz95EFAXHYCl88M3',
+                    "clientSecret" => '4zeVGXohTLnGDcRm7UYETosSEZK2N5gn',
                     "returnUrl" => 'http://localhost/index.php?r=site/auth-callback',
-                    "issuerUrl" => 'http://192.168.122.85:8180/realms/music-api/',
+                    "issuerUrl" => 'http://localhost:8180/realms/music-api/',
                     "name" => "keycloak",
                     "validateAuthState" => true,
 
