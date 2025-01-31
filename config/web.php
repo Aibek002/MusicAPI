@@ -39,10 +39,7 @@ $config = [
         'class' => \yii\httpclient\Client::class,
     ],
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'G8sGVSeYi4RqnvsY0wqa5oNVd8TXnNLl',
-            // 'csrfParam' => '_csrf',
-            // 'enableCsrfValidation' => true,
             'enableCsrfValidation' => false, 
             
         ],
