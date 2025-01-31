@@ -49,8 +49,8 @@ $config = [
         'session' => [
         'class' => 'yii\web\Session',
         'cookieParams' => [
-            'httponly' => true, // добавьте если еще нет
-            'secure' => false,  // установите в true, если используете https
+            'httponly' => true,
+            'secure' => false, 
         ],
     ],
         'user' => [
@@ -64,7 +64,6 @@ $config = [
         'mailer' => [
             'class' => \yii\symfonymailer\Mailer::class,
             'viewPath' => '@app/mail',
-            // send all mails to a file by default.
             'useFileTransport' => true,
         ],
         'log' => [
@@ -73,7 +72,7 @@ $config = [
                 [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning', 'info'],
-                    'logFile' => '@runtime/logs/app.log', // Убедитесь, что путь правильный
+                    'logFile' => '@runtime/logs/app.log', 
                 ],
             ],
         ],
@@ -91,7 +90,7 @@ $config = [
 ];
 
 if (YII_ENV_DEV) {
-    // configuration adjustments for 'dev' environment
+   
     $config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
