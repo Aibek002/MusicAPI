@@ -37,12 +37,6 @@ class AuthHandler
             ]);
         }
 
-
-        // $user->access_token = $this->accessToken;
-        // $user->refresh_token = $this->refreshToken;
-        // $user->access_token_expires_at= time() + $this->AccesstokenExpiresAt;
-        // $user->refresh_token_expires_at= time() + $this->RefreshtokenExpiresAt;
-
         if (!$user->save()) {
             throw new \yii\db\Exception('Failed to save user data.');
         }
