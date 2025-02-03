@@ -43,8 +43,7 @@ class AuthHandler
                 'auth_key' => Yii::$app->security->generateRandomString(),
             ]);
         }
-
-
+        
         $user->access_token = $this->accessToken;
         $user->refresh_token = $this->refreshToken;
         $user->access_token_expires_at= time() + $this->AccesstokenExpiresAt;
