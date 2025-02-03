@@ -8,47 +8,40 @@ use yii\authclient\ClientInterface;
 class AuthHandler
 {
     private $client;
-    private $accessToken;
-    private $refreshToken;
-    private $AccesstokenExpiresAt;
-    private $RefreshtokenExpiresAt;
 
 
-    public function __construct(ClientInterface $client, $accessToken, $refreshToken,$AccesstokenExpiresAt,$RefreshtokenExpiresAt)
+
+    public function __construct(ClientInterface $client)
     {
         $this->client = $client;
-        $this->accessToken = $accessToken;
-        $this->refreshToken = $refreshToken;
-        $this->AccesstokenExpiresAt=$AccesstokenExpiresAt;
-        $this->RefreshtokenExpiresAt=$RefreshtokenExpiresAt;
     }
 
     public function handle()
     {
-        $userAttributes = $this->client->getUserAttributes();
-        
+        $userAttributes = $this->client->api('me'); 
+        if ($userAttributes === false) {
+            Yii::error('Ошибка получения данных пользователя: ' . json_encode($this->client->getLastResponse()));
+            die;
+        }
+        var_dump($userAttributes); die;
         $email = $userAttributes['email'] ?? null;
-        $name = $userAttributes['given_name'] ?? null;
-        $surname = $userAttributes['family_name'] ?? null;
-        $username = $userAttributes['preferred_username'] ?? null;
+        $username = $userAttributes['display_name'] ?? null;
 
         $user = User::find()->where(['email' => $email])->one();
 
         if (!$user) {
             $user = new User([
                 'email' => $email,
-                'name' => $name,
-                'surname' => $surname,
                 'username' => $username,
                 'auth_key' => Yii::$app->security->generateRandomString(),
             ]);
         }
 
 
-        $user->access_token = $this->accessToken;
-        $user->refresh_token = $this->refreshToken;
-        $user->access_token_expires_at= time() + $this->AccesstokenExpiresAt;
-        $user->refresh_token_expires_at= time() + $this->RefreshtokenExpiresAt;
+        // $user->access_token = $this->accessToken;
+        // $user->refresh_token = $this->refreshToken;
+        // $user->access_token_expires_at= time() + $this->AccesstokenExpiresAt;
+        // $user->refresh_token_expires_at= time() + $this->RefreshtokenExpiresAt;
 
         if (!$user->save()) {
             throw new \yii\db\Exception('Failed to save user data.');

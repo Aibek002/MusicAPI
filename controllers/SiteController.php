@@ -23,8 +23,7 @@ class SiteController extends Controller
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::class,
-            'except' => ['auth-callback'],
-            'optional' => ['login'],
+            'optional' => ['index', 'login'],
 
         ];
 
@@ -34,38 +33,36 @@ class SiteController extends Controller
     }
     public function beforeAction($action)
     {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
-        $accessToken = $_SESSION['access_token'] ?? null;
-        $refreshToken = $_SESSION['refresh_token'] ?? null;
-        $expiresAt = $_SESSION['token_expires_at'] ?? null;
-
-
-        if ($accessToken && $expiresAt && $expiresAt - time() < 300) {
-            if ($refreshToken) {
-                $newTokens = $this->refreshAccessToken($refreshToken);
-                if ($newTokens) {
-                    $accessToken = $newTokens['access_token'];
-                    $refreshToken = $newTokens['refresh_token'];
-                    $expiresAt = $newTokens['token_expires_at'];
-                } else {
-                    Yii::$app->response->redirect(['site/login'])->send();
-                    return false;
-                }
-            } else {
-                Yii::$app->response->redirect(['site/auth'])->send();
-                return false;
-            }
-        }
-        if ($this->action->id !== 'auth-callback' && $this->action->id !== 'login' && !$accessToken) {
-            Yii::$app->response->redirect(['site/login'])->send();
-            return false;
-        }
-        if ($accessToken) {
-            Yii::$app->request->headers->set('Authorization', 'Bearer ' . $accessToken);
-        }
-        return parent::beforeAction($action);
+        // if (session_status() == PHP_SESSION_NONE) {
+        //     session_start();
+        // }
+        // $accessToken = $_SESSION['access_token'] ?? null;
+        // $refreshToken = $_SESSION['refresh_token'] ?? null;
+        // $expiresAt = $_SESSION['token_expires_at'] ?? null;
+        // if ($accessToken && $expiresAt && $expiresAt - time() < 100) {
+        //     if ($refreshToken) {
+        //         $newTokens = $this->refreshAccessToken($refreshToken);
+        //         if ($newTokens) {
+        //             $accessToken = $newTokens['access_token'];
+        //             $refreshToken = $newTokens['refresh_token'];
+        //             $expiresAt = $newTokens['token_expires_at'];
+        //         } else {
+        //             Yii::$app->response->redirect(['site/login'])->send();
+        //             return false;
+        //         }
+        //     } else {
+        //         Yii::$app->response->redirect(['site/auth'])->send();
+        //         return false;
+        //     }
+        // }
+        // if ($this->action->id !== 'auth-callback' && $this->action->id !== 'login' && !$accessToken) {
+        //     Yii::$app->response->redirect(['site/login'])->send();
+        //     return false;
+        // }
+        // if ($accessToken) {
+        //     Yii::$app->request->headers->set('Authorization', 'Bearer ' . $accessToken);
+        // }
+        // return parent::beforeAction($action);
     }
 
     private function refreshAccessToken($refreshToken)
@@ -74,12 +71,12 @@ class SiteController extends Controller
 
         try {
 
-            $response = $client->post('http://192.168.122.85:8180/realms/music-api/protocol/openid-connect/token', [
+            $response = $client->post('http://host.docker.internal:8180/realms/music-api/protocol/openid-connect/token', [
                 'form_params' => [
                     'grant_type' => 'refresh_token',
                     'refresh_token' => $refreshToken,
                     'client_id' => 'musiccli',
-                    'client_secret' => '4zeVGXohTLnGDcRm7UYETosSEZK2N5gn',
+                    'client_secret' => 'YiMc6ZeKT0AQG7TdBiKipYKJF3JoVbLp',
                 ],
             ]);
 
@@ -88,7 +85,7 @@ class SiteController extends Controller
             $_SESSION['access_token'] = $data['access_token'];
             $_SESSION['refresh_token'] = $data['refresh_token'];
             $_SESSION['token_expires_at'] = time() + $data['expires_in'];
-// var_dump($_SESSION['access_token']);die;
+            // var_dump($_SESSION['access_token']);die;
             if ($user) {
 
                 $user->access_token = $data['access_token'];
@@ -99,8 +96,8 @@ class SiteController extends Controller
                 if (!$user->save()) {
                     Yii::error('Ошибка при сохранении обновлённых токенов для пользователя');
                 }
-            }else{
-            return $this->redirect(['site/login']);
+            } else {
+                return $this->redirect(['site/login']);
             }
 
             return [
@@ -254,7 +251,7 @@ class SiteController extends Controller
             mkdir($directory, 0777, true);
         }
 
-        return  uniqid('audio_', true) . '.' . $audioFile->extension;
+        return uniqid('audio_', true) . '.' . $audioFile->extension;
     }
     private function createPostFormRequest($post, $request, $file)
     {
@@ -279,7 +276,7 @@ class SiteController extends Controller
 
 
 
-        return  $compresedFile = $this->compressMp3($filePath);
+        return $compresedFile = $this->compressMp3($filePath);
     }
 
 
@@ -374,15 +371,13 @@ class SiteController extends Controller
             $req = Yii::$app->request;
 
             $authcode = $req->get("code");
-            $cli = Yii::$app->authClientCollection->getClient("keycloak");
 
+            $cli = Yii::$app->authClientCollection->getClient("keycloak");
             $token = $cli->fetchAccessToken($authcode);
             $accessToken = $token->getToken();
             $refreshToken = $token->getParam('refresh_token');
             $AccesstokenExpiresAt = $token->getParam('expires_in');
             $RefreshtokenExpiresAt = $token->getParam('refresh_expires_in');
-            // var_dump($accessToken);die;
-            // Сохранение токенов
             $_SESSION['access_token'] = $accessToken;
             $_SESSION['refresh_token'] = $refreshToken;
             $_SESSION['token_expires_at'] = time() + $AccesstokenExpiresAt;

@@ -23,7 +23,7 @@ class m250115_183421_create_post_table extends Migration
             'descriptionPost' => $this->text(),
             'nameAudioFile' => $this->string(255),
             'postCreator' => $this->integer(),
-            'genre_id' => $this->integer(),
+            'tags_id' => $this->integer(),
             'createAt' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP'),
             'updateAt' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP')->append('ON UPDATE CURRENT_TIMESTAMP'),
             'status_id' => $this->integer()->defaultValue(1),
