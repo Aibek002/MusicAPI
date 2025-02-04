@@ -13,9 +13,11 @@ services:
       - data
 
   php-fpm:
-    image: php:8.3-fpm
+    build: ./php
     volumes:
       - ./:/var/www/html # Application files
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - data
 
@@ -39,7 +41,6 @@ services:
       PMA_HOST: data
       MYSQL_PASSWORD: yii2basic
       MYSQL_ROOT_PASSWORD: yii2basic
-
     ports:
       - "8080:80"
     depends_on:

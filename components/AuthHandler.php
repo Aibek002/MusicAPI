@@ -18,12 +18,13 @@ class AuthHandler
 
     public function handle()
     {
+        // var_dump("Hello"); die;
+
         $userAttributes = $this->client->api('me'); 
-        if ($userAttributes === false) {
-            Yii::error('Ошибка получения данных пользователя: ' . json_encode($this->client->getLastResponse()));
-            die;
-        }
-        var_dump($userAttributes); die;
+        // if ($userAttributes === false) {
+        //     Yii::error('Ошибка получения данных пользователя: ' . json_encode($this->client->getLastResponse()));
+        //     die;
+        // }
         $email = $userAttributes['email'] ?? null;
         $username = $userAttributes['display_name'] ?? null;
 
@@ -34,6 +35,7 @@ class AuthHandler
                 'email' => $email,
                 'username' => $username,
                 'auth_key' => Yii::$app->security->generateRandomString(),
+                'access_token'=> $_SESSION['access_token'],
             ]);
         }
 
