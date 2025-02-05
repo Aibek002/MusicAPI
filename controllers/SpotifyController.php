@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use app\components\AuthHandler;
 use Yii;
+use yii\helpers\Json;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\Controller;
 use yii\authclient\ClientInterface;
@@ -15,7 +16,7 @@ class SpotifyController extends Controller
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::class,
-            'optional' => ['index', 'login'],
+            'optional' => ['index', 'auth-callback', 'login'],
 
         ];
 
@@ -30,7 +31,6 @@ class SpotifyController extends Controller
             session_start();
         }
         $accessToken = $_SESSION['access_token'] ?? null;
-        // var_dump($accessToken);die;
         if ($accessToken) {
             Yii::$app->request->headers->set('Authorization', 'Bearer ' . $accessToken);
         }
@@ -38,14 +38,37 @@ class SpotifyController extends Controller
     }
     public function actionIndex()
     {
+        $ch = curl_init();
+        $url = "https://api.spotify.com/v1/browse/new-releases?limit=10";
+        $header = Yii::$app->request->headers->get('Authorization');
+        $headers = [
+            'Authorization' => 'Bearer BQBKx8PT2GOz69kAickCjydzDqjf-cgW0ha7ZBh5nehCWLk-7qITE3j11LW8gT5ygS1VxiAPYu2F3VrBgSOMiBG3lIsaZgOuieEVj5SV7t3oL1oLHkiHciTmquvLaToaSsBARIK3oogbFBuWXGRHNRsh1dJv_1jbEXzFHf-SkwKPTnEuyb48hiTZsmg_PuMCDmiy1T1aoFTHkf_WSyb-WTbQfDAhvTDW3kNJhAzdVfGSx7GsNJHU-VKYK7CQtlZ9',
+            'Content-Type' => 'application/json',
+        ];
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+        if ($response == false) {
+            $error = curl_error($ch);
+            var_dump($error);
+            die;
+        } else {
+
+            $data = Json::decode($response);
+        }
+
         return $this->render('index');
     }
     public function actionLogin()
     {
         $user = Yii::$app->user;
-        if (!$user->isGuest && $user->identity->access_token) {
-            return $this->redirect(['spotify/index']);
-        }
+        // if (!$user->isGuest && $user->identity->access_token) {
+        //     return $this->redirect(['spotify/index']);
+        // }
         $client = Yii::$app->authClientCollection->getClient('spotify');
         $auth = $client->buildAuthUrl();
         return $this->redirect($auth);
@@ -57,22 +80,16 @@ class SpotifyController extends Controller
 
         if ($authcode) {
             $token = $client->fetchAccessToken($authcode);
-            $this->setSession($token);
 
             if (!$token) {
                 Yii::$app->session->setFlash('error', 'Ошибка аутентификации');
             }
-            // Получаем данные пользователя
+            $this->setSession($token);
             $client->setAccessToken($token);
 
             $user = (new AuthHandler($client))->handle();
 
-            // var_dump($user);
-            // die;
-            if (Yii::$app->user->login($user)) {
-                Yii::$app->session->setFlash('success', 'Вы вошли как ' . Yii::$app->user->identity->username);
-
-            } else {
+            if (!$user) {
                 Yii::$app->session->setFlash('error', 'Ошибка аутентификации');
 
             }
@@ -87,7 +104,7 @@ class SpotifyController extends Controller
     {
         $_SESSION['access_token'] = $token->getToken();
         $_SESSION['refresh_token'] = $token->getParam('refresh_token');
-        $_SESSION['token_expires_at'] = time() + $token->getParam('expires_in');
+        $_SESSION['access_token_expires_at'] = time() + $token->getParam('expires_in');
         $_SESSION['refresh_token_expires_at'] = time() + $token->getParam('refresh_expires_in');
     }
 
