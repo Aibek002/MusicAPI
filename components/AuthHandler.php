@@ -37,6 +37,7 @@ class AuthHandler
                 'access_token_expires_at' => $_SESSION['access_token_expires_at'],
                 'refresh_token' => $_SESSION['refresh_token'],
             ]);
+
         }else{
             $user->auth_key = Yii::$app->security->generateRandomString();
             $user->access_token = $_SESSION['access_token'];
@@ -45,6 +46,7 @@ class AuthHandler
             $user->refresh_token_expires_at = $_SESSION['refresh_token_expires_at'];
 
         }
+
 
         if (!$user->save()) {
             throw new \yii\db\Exception('Failed to save user data.');
