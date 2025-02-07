@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\components\AuthHandler;
+use app\models\SearchTrackForm;
 use Yii;
 use yii\helpers\Json;
 use yii\filters\auth\HttpBearerAuth;
@@ -38,40 +39,46 @@ class SpotifyController extends Controller
     }
     public function actionIndex()
     {
-        $ch = curl_init();
-        // $url = "https://api.spotify.com/v1/browse/new-releases?offset=0&limit=20";
-        $url = "https://api.spotify.com/v1/playlists/3cEYpjA9oz9GiPac4AsH4n";
-        $header = 'Authorization:' . Yii::$app->request->headers->get('Authorization');
-        $headers = [
-            'Authorization' => $header,
-            'Content-Type' => 'application/json',
-        ];
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        $model = new SearchTrackForm();
+        if ($model->load(Yii::$app->request->get()) && $model->validate()) {
+            $accessToken = Yii::$app->request->headers->get('Authorization'); // Твой токен
+            $query=urldecode($model->query);
+            $url = "https://api.spotify.com/v1/search?q=" . urlencode($query) . "&type=track";
 
-        $response = curl_exec($ch);
-        curl_close($ch);
-        if (!$response) {
-            $error = curl_error($ch);
-            var_dump($error);
-            die;
+            $headers = [
+                "Authorization:" . $accessToken,
+                "Content-Type: application/json",
+            ];
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200) {
+                $data = json_decode($response, true);
+                $tracks = $data["tracks"]["items"] ?? [];
+            } else {
+                $tracks = [];
+            }
+        } else {
+            $tracks = [];
         }
 
-        $data = Json::decode($response);
-        // var_dump($data);
-        // die;
-
-
-        return $this->render('index', ['playlist' => $data]);
+        return $this->render('index', [
+            'tracks' => $tracks,
+           'model' => $model,
+        ]);
     }
     public function actionLogin()
     {
         $user = Yii::$app->user;
-        // if (!$user->isGuest && $user->identity->access_token) {
-        //     return $this->redirect(['spotify/index']);
-        // }
+
         $client = Yii::$app->authClientCollection->getClient('spotify');
         $auth = $client->buildAuthUrl();
         return $this->redirect($auth);
