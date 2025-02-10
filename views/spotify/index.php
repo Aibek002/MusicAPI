@@ -22,25 +22,27 @@ use yii\helpers\Html;
         'method' => 'get',
         'action' => ['spotify/index']
     ]); ?>
-    <?= $form->field($model, 'query')->textInput(['placeholder' => 'Введите название песни'])->label(false) ?>
-    <?= Html::submitButton('Поиск', ['class' => 'btn btn-primary']) ?>
+   
 
+ <div class="input-group mb-3">
+    <?= $form->field($model, 'query')->textInput(['placeholder' => 'Введите название песни' , 'class'=> 'form-control','aria-describedby'=>'button-submit'])->label(false) ?>
+    <?= Html::submitButton('Поиск', ['class' => 'btn btn-outline-secondary','id'=>'button-submit']) ?>
+</div>
     <?php ActiveForm::end(); ?>
 
-    <div class="flex">
-        <div class="flex-menu-left"></div>
+ 
         <div class="flex-content">
-            <div class="album-list">
-                <div class="playlist-list">
-                    <div class="playlist-detail">
-                        <?php foreach ($tracks as $track): ?>
-                            <!-- <audio src="https://open.spotify.com/embed/track/<?php echo $track['id'] ?>"></audio> -->
-                            <iframe src='https://open.spotify.com/embed/track/<?php echo $track['id'] ?>' width="300"
-                                height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="menu-right"></div>
-                </div>
+
+            <div class="playlist-detail">
+                <?php foreach ($tracks as $track): ?>
+
+                    <iframe src='https://open.spotify.com/embed/track/<?php echo $track['id'] ?>' width="300" height="80"
+                        frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+                        
+                <?php endforeach; ?>
+            </div>
+           
+        </div> <div class="flex-menu-right"></div>
 
 </body>
 

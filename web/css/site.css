@@ -1,18 +1,64 @@
-main > .container {
-    padding: 70px 15px 20px;
+.flex {
+    display: flex;
+    padding-top: 50px;
+    background: #0a0a2f;
+    height: 100vh;
 }
-.col-lg-4.mb-3{
+.flex-content {
+    width: 60%;
+    /* min-width: 500px; */
+}
+.flex-menu-left {
+    width: 100px;
+}
+.flex-menu-right {
+    width: 25%;
+}
+.form-group {
+    /* margin-bottom: 1rem; */
+    max-width: 100%;
+    width: 80%;
+}
+.bg-menu {
+    border-right: 0.1px solid white;
+}
+.playlist-detail {
+    overflow: auto;
+    height: 350px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: #fff;
+    --bs-btn-border-color: #fff;
+    --bs-btn-hover-color: #0a0233;
+}
+
+
+
+
+/* main>.container {
+    width: 80vw;
+} */
+
+.col-lg-4.mb-3 {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
 }
+
 .custom-audio {
     width: 300px;
     height: 50px;
 }
 
-.next.disabled{
+.next.disabled {
     background: gray;
     padding: 10px 20px;
     font-size: 14px;
@@ -24,10 +70,12 @@ main > .container {
     ; */
 
 }
-.checkbox{
+
+.checkbox {
     width: 100px;
 }
-.prev.disabled{
+
+.prev.disabled {
     background: gray;
     padding: 10px 20px;
     font-size: 14px;
@@ -37,16 +85,18 @@ main > .container {
     transition: background-color 0.3s;
     /* margin-top: 30px; */
 }
-.btn.btn-primary{
+
+.btn.btn-primary {
     margin-top: 0;
 }
+
 .footer {
     background-color: #f5f5f5;
     font-size: .9em;
     height: 60px;
 }
 
-.footer > .container {
+.footer>.container {
     padding-right: 15px;
     padding-left: 15px;
 }
@@ -57,7 +107,8 @@ main > .container {
 }
 
 /* add sorting icons to gridview sort links */
-a.asc:after, a.desc:after {
+a.asc:after,
+a.desc:after {
     content: '';
     left: 3px;
     display: inline-block;
@@ -97,31 +148,31 @@ a.desc:after {
 }
 
 /* align the logout "link" (button in form) of the navbar */
-.nav li > form > button.logout {
+.nav li>form>button.logout {
     padding-top: 7px;
     color: rgba(255, 255, 255, 0.5);
 }
 
 @media(max-width:767px) {
-    .nav li > form > button.logout {
-        display:block;
+    .nav li>form>button.logout {
+        display: block;
         text-align: left;
         width: 100%;
         padding: 10px 0;
     }
 }
 
-.nav > li > form > button.logout:focus,
-.nav > li > form > button.logout:hover {
+.nav>li>form>button.logout:focus,
+.nav>li>form>button.logout:hover {
     text-decoration: none;
     color: rgba(255, 255, 255, 0.75);
 }
 
-.nav > li > form > button.logout:focus {
+.nav>li>form>button.logout:focus {
     outline: none;
 }
 
-.form-group {
+/* .form-group {
     margin-bottom: 1rem;
 }
 .form-input {
@@ -131,9 +182,9 @@ a.desc:after {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+} */
 
-.form-input .form-group {
+/* .form-input .form-group {
     margin-bottom: 20px;
 }
 
@@ -142,9 +193,9 @@ a.desc:after {
     color: #333;
     margin-bottom: 5px;
     display: block;
-}
+} */
 
-.form-input input[type="text"],
+/* .form-input input[type="text"],
 .form-input textarea,
 .form-input input[type="file"] {
     width: 100%;
@@ -161,7 +212,7 @@ a.desc:after {
 .form-input textarea:focus,
 .form-input input[type="file"]:focus {
     border-color: #007bff;
-}
+} */
 
 .tags_title {
     font-weight: bold;
@@ -205,6 +256,7 @@ a.desc:after {
 .btn-primary:hover {
     background-color: #0056b3;
 }
+
 .form-container {
     max-width: 400px;
     margin: 0 auto;
@@ -240,6 +292,7 @@ a.desc:after {
 .form-container input[type="text"]:focus {
     border-color: #007bff;
 }
+
 body {
     background-color: #f5f5f5;
     font-family: Arial, sans-serif;
@@ -265,7 +318,8 @@ body {
     font-size: 1.2rem;
 }
 
-.tags, .sort-links {
+.tags,
+.sort-links {
     margin-bottom: 20px;
     display: flex;
     flex-wrap: wrap;
