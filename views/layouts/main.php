@@ -22,68 +22,78 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
 <html lang="<?= Yii::$app->language ?>" class="h-100">
+
 <head>
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
 </head>
+
 <body class="d-flex flex-column h-100">
-<?php $this->beginBody() ?>
+    <?php $this->beginBody() ?>
 
-<div class="flex">
+    <div class="flex">
 
 
-<div class="flex-menu-left">
-    <?php
-    NavBar::begin([
-        // 'brandLabel' => Yii::$app->name,
-        'brandUrl' => Yii::$app->homeUrl,
-        'options' => ['class' => 'navbar navbar-dark bg-menu fixed-left d-flex flex-column navbar-expand-md h-100']
-    ]);
-    echo Nav::widget([
-        'options' => ['class' => 'navbar-nav'],
-        'items' => [
-            ['label' => 'Home', 'url' => ['/site/index']],
-            ['label' => 'About', 'url' => ['/site/about']],
-            ['label' => 'Contact', 'url' => ['/site/contact']],
-            ['label' => 'Create Post', 'url' => ['/site/create-post']],
+        <div class="flex-menu-left">
+            <?php
+            NavBar::begin([
+                // 'brandLabel' => Yii::$app->name,
+                'brandUrl' => Yii::$app->homeUrl,
+                'options' => ['class' => 'navbar navbar-dark bg-menu fixed-left d-flex flex-column navbar-expand-md h-100']
+            ]);
+            echo Nav::widget(
+                [
+                    'options' => ['class' => 'navbar-nav'],
+                    'items' => [
+                        [
+                            'label' => Html::tag('img', '', ['src' => Yii::getAlias("@web/image/icon/home-icon.svg"), 'alt' => 'Icon']),
+                            'url' => ['/spotify/index'],
+                            'encode' => false,
+                        ],
 
-            Yii::$app->user->isGuest
-                ? ['label' => 'Login', 'url' => ['/spotify/login']]
-                : '<li class="nav-item">'
-                    . Html::beginForm(['/site/logout'])
-                    . Html::submitButton(
-                        'Logout',
-                        // 'Logout (' . Yii::$app->user->identity->username . ')',
-                        ['class' => 'nav-link btn btn-link logout']
-                    )
-                    . Html::endForm()
-                    . '</li>'
-        ]
-    ]);
-    NavBar::end();
-    ?>
-</div>
-
-<main id="main" class="flex-shrink-0" role="main">
-    <div class="container">
-        <?php if (!empty($this->params['breadcrumbs'])): ?>
-            <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>
-        <?php endif ?>
-        <?= Alert::widget() ?>
-        <?= $content ?>
-    </div>
-</main>
-</div>
-<footer id="footer" class="mt-auto py-3 bg-light">
-    <div class="container">
-        <div class="row text-muted">
-            <div class="col-md-6 text-center text-md-start">&copy; My Company <?= date('Y') ?></div>
-            <div class="col-md-6 text-center text-md-end"><?= Yii::powered() ?></div>
+                        ['label' => 'About', 'url' => ['/site/about']],
+                        ['label' => 'Contact', 'url' => ['/site/contact']],
+                        // ['label' => 'Create Post', 'url' => ['/site/create-post']],
+            
+                        Yii::$app->user->isGuest
+                        ? ['label' => 'Login', 'url' => ['/spotify/login']]
+                        : '<li class="nav-item">'
+                        . Html::beginForm(['/site/logout'])
+                        . Html::submitButton(
+                            'Logout',
+                            // 'Logout (' . Yii::$app->user->identity->username . ')',
+                            ['class' => 'nav-link btn btn-link logout']
+                        )
+                        . Html::endForm()
+                        . '</li>'
+                    ]
+                ]
+            );
+            NavBar::end();
+            ?>
         </div>
-    </div>
-</footer>
 
-<?php $this->endBody() ?>
+        <main id="main" class="flex-shrink-0" role="main">
+            <div class="container">
+                <?php if (!empty($this->params['breadcrumbs'])): ?>
+                    <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>
+                <?php endif ?>
+                <?= Alert::widget() ?>
+                <?= $content ?>
+            </div>
+        </main>
+    </div>
+    <footer id="footer" class="mt-auto py-3 bg-light">
+        <div class="container">
+            <div class="row text-muted">
+                <div class="col-md-6 text-center text-md-start">&copy; My Company <?= date('Y') ?></div>
+                <div class="col-md-6 text-center text-md-end"><?= Yii::powered() ?></div>
+            </div>
+        </div>
+    </footer>
+
+    <?php $this->endBody() ?>
 </body>
+
 </html>
 <?php $this->endPage() ?>

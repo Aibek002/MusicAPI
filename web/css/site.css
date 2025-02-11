@@ -1,7 +1,16 @@
+@media (min-width:768px) {
+main{
+    width: 90vw;
+    padding-top: 10px;
+}
+.flex-menu-left {
+    width: 300px;
+}
+}
 .flex {
     display: flex;
     padding-top: 50px;
-    background: #0a0a2f;
+    background: #000000;
     height: 100vh;
 }
 .flex-content {
@@ -36,11 +45,13 @@
 .btn-outline-secondary {
     --bs-btn-color: #fff;
     --bs-btn-border-color: #fff;
-    --bs-btn-hover-color: #0a0233;
+    --bs-btn-hover-color: #000000;
 }
 
 
-
+.input-group{
+    flex-wrap: nowrap;
+}
 
 /* main>.container {
     width: 80vw;
